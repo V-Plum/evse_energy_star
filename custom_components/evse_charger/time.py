@@ -33,7 +33,9 @@ TEXT_DESCRIPTIONS = [
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Define setup entry."""
     host = hass.data[DOMAIN][entry.entry_id][CONF_HOST]

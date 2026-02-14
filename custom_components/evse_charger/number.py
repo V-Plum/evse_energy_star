@@ -10,7 +10,10 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import (
+    DOMAIN,
+    CONF_DEVICE_NAME,
+)
 from .coordinator import EVSECoordinator
 
 LOGGER = logging.getLogger(__name__)
@@ -74,7 +77,6 @@ class EVSENumber(CoordinatorEntity, NumberEntity):
         self._attr_native_step = config["step"]
         self._attr_native_min_value = config["min"]
         self._attr_unique_id = f"{self._translation_key}_{config_entry.entry_id}"
-        self._restricted_mode = False
         self._attr_has_entity_name = True
         self._attr_suggested_object_id = (
             f"{self.coordinator.device_name_slug}_{self._attr_translation_key}"
@@ -95,15 +97,21 @@ class EVSENumber(CoordinatorEntity, NumberEntity):
     def native_max_value(self) -> float:
         """Return native max value."""
         if self._key == "currentSet":
-            current = self.coordinator.data.get("currentSet")
-            if current is not None:
-                self._restricted_mode = float(current) <= 16
-            design_max = float(self.coordinator.data.get("curDesign", 32))
-            return 16 if self._restricted_mode else design_max
+            design_max = int(float(self.coordinator.data.get("curDesign", 32)))
+            
+            return design_max
+        return self._config["max"]
+        LOGGER.debug("number.py → max: %s", self._config["max"])
         return self._config["max"]
 
     async def async_set_native_value(self, value: float) -> None:
         """Set native value."""
+
+        if self._key == "currentSet":
+            value = int(value)
+        if self._key == "aiVoltage":
+            value = int(value)
+
         payload = f"{self._key}={value}"
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
@@ -115,6 +123,7 @@ class EVSENumber(CoordinatorEntity, NumberEntity):
             await session.post(
                 f"http://{self._host}/pageEvent", data=payload, headers=headers
             )
+
             await self.coordinator.async_request_refresh()
             self.async_write_ha_state()
         except Exception:
@@ -125,7 +134,7 @@ class EVSENumber(CoordinatorEntity, NumberEntity):
         """Return device info."""
         return {
             "identifiers": {(DOMAIN, self.config_entry.entry_id)},
-            "name": self.config_entry.data.get("device_name", "Eveus Pro"),
+            "name": self.config_entry.data.get(CONF_DEVICE_NAME, "Eveus Pro"),
             "manufacturer": "Energy Star",
             "model": "EVSE",
             "sw_version": self.coordinator.data.get("fwVersion"),

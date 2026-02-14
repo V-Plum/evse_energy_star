@@ -2,7 +2,7 @@
 
 from typing import Final
 
-DOMAIN: Final = "ha_evse_charger"
+DOMAIN: Final = "evse_charger"
 DEFAULT_SCAN_INTERVAL = 30
 TITLE = "EVSE Charger"
 

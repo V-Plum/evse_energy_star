@@ -80,12 +80,16 @@ class EVSESwitch(SwitchEntity):
         """Return true if the switch is on."""
         if self._key == "restrictedMode":
             return float(self.coordinator.data.get("currentSet", 32)) <= 16
+        if self._key == "evseEnabled":
+            return not bool(self.coordinator.data.get("evseEnabled"))
         return bool(self.coordinator.data.get(self._key))
 
     async def async_turn_on(self) -> None:
         """Turn on."""
         if self._key == "restrictedMode":
             await self._set_current_if_needed(12, only_if_high=True)
+        elif self._key == "evseEnabled":
+            await self._send_event(False)
         else:
             await self._send_event(True)
 
@@ -93,6 +97,8 @@ class EVSESwitch(SwitchEntity):
         """Turn off."""
         if self._key == "restrictedMode":
             await self._set_current_if_needed(16, only_if_low=True)
+        elif self._key == "evseEnabled":
+            await self._send_event(True)
         else:
             await self._send_event(False)
 

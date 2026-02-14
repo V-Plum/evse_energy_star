@@ -64,7 +64,7 @@ class SyncTimeButton(CoordinatorEntity, ButtonEntity):
 
             local_ts = int(datetime.now().timestamp())  # noqa: DTZ005
             system_time = local_ts + tz * 3600
-            LOGGER.debug("button.py → Синхронізація часу: systemTime=%s", system_time)
+            LOGGER.debug("button.py → Synchronizing time: systemTime=%s", system_time)
 
             session = async_get_clientsession(self.coordinator.hass)
             await session.post(

@@ -7,7 +7,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.helpers import selector
 from homeassistant.helpers.translation import async_get_translations
-from homeassistant.helpers.typing import FlowResult
+from homeassistant.data_entry_flow import FlowResult
 
 from .const import (
     CONF_DEVICE_NAME,
@@ -26,6 +26,10 @@ class EVSEEnergyStarConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
+
+    def __init__(self) -> None:
+        """Initialize config flow."""
+        self.data: dict[str, Any] = {}
 
     @staticmethod
     def async_get_options_flow(

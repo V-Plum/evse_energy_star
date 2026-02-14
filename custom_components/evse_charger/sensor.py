@@ -82,7 +82,14 @@ SENSOR_DEFINITIONS = [
         SensorDeviceClass.ENERGY,
         None,
     ),
-    ("sessionTime", "ha_evse_charger_session_time", None, None, None, None),
+    (
+        "sessionTime",
+        "ha_evse_charger_session_time",
+        "s",
+        SensorStateClass.MEASUREMENT,
+        None,
+        None,
+    ),
     (
         "totalEnergy",
         "ha_evse_charger_total_energy",
@@ -91,7 +98,14 @@ SENSOR_DEFINITIONS = [
         SensorDeviceClass.ENERGY,
         None,
     ),
-    ("systemTime", "ha_evse_charger_system_time", None, None, None, None),
+    (
+        "systemTime",
+        "ha_evse_charger_system_time",
+        None,
+        None,
+        None,
+        None,
+    ),
     (
         "powerMeas",
         "ha_evse_charger_power",
@@ -213,15 +227,16 @@ class EVSESensor(CoordinatorEntity, SensorEntity):
             return "unknown"
         try:
             if self._key in ["curMeas1", "curMeas2", "curMeas3"]:
-                return round(float(value) / 10, 2)
+                return round(float(value), 2)
             if self._key in ["sessionEnergy", "totalEnergy"]:
-                return round(float(value) / 10, 3)
+                return round(float(value), 3)
             if self._key == "sessionTime":
                 total_sec = int(float(value))
                 h = total_sec // 3600
                 m = (total_sec % 3600) // 60
                 s = total_sec % 60
                 return f"{h:02}:{m:02}:{s:02}"
+            
             if self._key == "state":
                 # Повертаємо ключ для перекладу з translations
                 return STATUS_MAP.get(value, "unknown")
@@ -234,11 +249,10 @@ class EVSESensor(CoordinatorEntity, SensorEntity):
         new_value = self.coordinator.data.get(self._key)
         if self._key == "systemTime":
             try:
-                old_str = str(self._attr_native_value)
-                new_str = str(new_value)
-                fmt = "%H:%M:%S"
-                old_dt = datetime.strptime(old_str, fmt)
-                new_dt = datetime.strptime(new_str, fmt)
+                old_ts = int(float(str(self._attr_native_value or "0")))
+                new_ts = int(float(str(new_value)))
+                old_dt = datetime.fromtimestamp(old_ts)
+                new_dt = datetime.fromtimestamp(new_ts)
                 if abs((new_dt - old_dt).total_seconds()) <= 2:
                     return
             except Exception:
