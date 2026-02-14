@@ -3,13 +3,17 @@ from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from .const import DOMAIN
+from .const import (
+    DOMAIN,
+    CONF_DEVICE_NAME,
+)
 
-_LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 SWITCH_DEFINITIONS = [
-    ("groundCtrl", "evse_energy_star_control_pe"),
-    ("restrictedMode", "evse_energy_star_restricted_mode"),
+    ("groundCtrl", "ha_evse_charger_control_pe"),
+    ("restrictedMode", "ha_evse_charger_restricted_mode"),
+    ("evseEnabled", "ha_evse_charger_evse_enabled"),
 ]
 
 async def async_setup_entry(hass, entry: ConfigEntry, async_add_entities: AddEntitiesCallback):
@@ -21,8 +25,8 @@ async def async_setup_entry(hass, entry: ConfigEntry, async_add_entities: AddEnt
     ]
 
     entities.append(EVSEScheduleSwitch(coordinator, entry))
-    entities.append(EVSESimpleSwitch(coordinator, entry, "oneCharge", "evse_energy_star_one_charge"))
-    entities.append(EVSESimpleSwitch(coordinator, entry, "aiMode", "evse_energy_star_adaptive_mode"))
+    entities.append(EVSESimpleSwitch(coordinator, entry, "oneCharge", "ha_evse_charger_one_charge"))
+    entities.append(EVSESimpleSwitch(coordinator, entry, "aiMode", "ha_evse_charger_adaptive_mode"))
 
     async_add_entities(entities)
 
@@ -70,7 +74,7 @@ class EVSESwitch(SwitchEntity):
             await session.post(f"http://{self._host}/pageEvent", data=payload, headers=headers)
             await self.coordinator.async_request_refresh()
         except Exception as err:
-            _LOGGER.error("switch.py → помилка запиту %s → %s", self._key, repr(err))
+            LOGGER.error("switch.py → помилка запиту %s → %s", self._key, repr(err))
 
     async def _set_current_if_needed(self, target, only_if_high=False, only_if_low=False):
         current = float(self.coordinator.data.get("currentSet", 32))
@@ -99,7 +103,7 @@ class EVSEScheduleSwitch(SwitchEntity):
         self.coordinator = coordinator
         self.config_entry = config_entry
         self._host = coordinator.host
-        self._attr_translation_key = "evse_energy_star_schedule"
+        self._attr_translation_key = "ha_evse_charger_schedule"
         self._attr_unique_id = f"schedule_{config_entry.entry_id}"
         self._attr_has_entity_name = True
         self._attr_suggested_object_id = f"{self.coordinator.device_name_slug}_{self._attr_translation_key}"
@@ -122,7 +126,7 @@ class EVSEScheduleSwitch(SwitchEntity):
     async def _send(self, state: bool):
         data = self.coordinator.data
         if not data:
-            _LOGGER.warning("switch.py → coordinator.data порожній, розклад не оновлено")
+            LOGGER.warning("switch.py → coordinator.data порожній, розклад не оновлено")
             return
 
         payload = (
@@ -138,7 +142,7 @@ class EVSEScheduleSwitch(SwitchEntity):
             })
             await self.coordinator.async_request_refresh()
         except Exception as err:
-            _LOGGER.error("switch.py → помилка оновлення розкладу → %s", repr(err))
+            LOGGER.error("switch.py → помилка оновлення розкладу → %s", repr(err))
 
     @property
     def device_info(self):
@@ -190,13 +194,13 @@ class EVSESimpleSwitch(SwitchEntity):
             await session.post(f"http://{self._host}/pageEvent", data=payload, headers=headers)
             await self.coordinator.async_request_refresh()
         except Exception as err:
-            _LOGGER.error("switch.py → помилка запиту %s → %s", self._key, repr(err))
+            LOGGER.error("switch.py → помилка запиту %s → %s", self._key, repr(err))
 
     @property
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, self.config_entry.entry_id)},
-            "name": self.config_entry.data.get('device_name', 'Eveus Pro'),
+            "name": self.config_entry.data.get(CONF_DEVICE_NAME, 'Eveus Pro'),
             "manufacturer": "Energy Star",
             "model": "EVSE",
             "sw_version": self.coordinator.data.get("fwVersion")

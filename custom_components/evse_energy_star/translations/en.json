@@ -43,9 +43,17 @@
   },
   "entity": {
     "sensor": {
-      "evse_energy_star_status": {
+      "ha_evse_charger_status": {
         "name": "Charging Status",
         "state": {
+          "power_up": "Power Up",
+          "self_test": "Self Test",
+          "standby": "Standby",
+          "car_connected": "Car Connected",
+          "charging_complete": "Charging Complete",
+          "disabled": "Disabled",
+          "error": "Error",
+
           "no_data": "No data",
           "charging": "Charging",
           "waiting": "Waiting",
@@ -62,45 +70,57 @@
           "undervoltage": "Undervoltage"
         }
       },
-      "evse_energy_star_current_set": {
+      "ha_evse_charger_current_set": {
         "name": "Set Current"
       },
-      "evse_energy_star_current_phase_1": {
+      "ha_evse_charger_current_phase_1": {
         "name": "Phase 1 Current"
       },
-      "evse_energy_star_voltage_phase_1": {
+      "ha_evse_charger_voltage_phase_1": {
         "name": "Phase 1 Voltage"
       },
-      "evse_energy_star_temperature_box": {
+      "ha_evse_charger_current_phase_2": {
+        "name": "Phase 2 Current"
+      },
+      "ha_evse_charger_voltage_phase_2": {
+        "name": "Phase 2 Voltage"
+      },
+      "ha_evse_charger_current_phase_3": {
+        "name": "Phase 3 Current"
+      },
+      "ha_evse_charger_voltage_phase_3": {
+        "name": "Phase 3 Voltage"
+      },
+      "ha_evse_charger_temperature_box": {
         "name": "Box Temperature"
       },
-      "evse_energy_star_temperature_socket": {
+      "ha_evse_charger_temperature_socket": {
         "name": "Socket Temperature"
       },
-      "evse_energy_star_leakage": {
+      "ha_evse_charger_leakage": {
         "name": "Leakage"
       },
-      "evse_energy_star_session_energy": {
+      "ha_evse_charger_session_energy": {
         "name": "Session Energy"
       },
-      "evse_energy_star_session_time": {
+      "ha_evse_charger_session_time": {
         "name": "Session Duration"
       },
-      "evse_energy_star_total_energy": {
+      "ha_evse_charger_total_energy": {
         "name": "Total Energy"
       },
-      "evse_energy_star_system_time": {
+      "ha_evse_charger_system_time": {
         "name": "System Time"
       },
-      "evse_energy_star_ground_status": {
+      "ha_evse_charger_ground_status": {
         "name": "Ground Status"
       }
     },
     "number": {
-      "evse_energy_star_current_limit": {
+      "ha_evse_charger_current_limit": {
         "name": "Current Limit"
       },
-      "evse_energy_star_voltage_adaptive": {
+      "ha_evse_charger_voltage_adaptive": {
         "name": "Adaptive Voltage"
       }
     },
@@ -113,35 +133,38 @@
       }
     },
     "switch": {
-      "evse_energy_star_control_pe": {
+      "ha_evse_charger_control_pe": {
         "name": "Ground Control"
       },
-      "evse_energy_star_restricted_mode": {
+      "ha_evse_charger_restricted_mode": {
         "name": "16A Mode"
       },
-      "evse_energy_star_schedule": {
+      "ha_evse_charger_schedule": {
         "name": "Scheduled Charging"
       },
-      "evse_energy_star_one_charge": {
+      "ha_evse_charger_one_charge": {
         "name": "One-Time Charge"
       },
-      "evse_energy_star_adaptive_mode": {
+      "ha_evse_charger_adaptive_mode": {
         "name": "Adaptive Mode"
+      },
+      "ha_evse_charger_evse_enabled": {
+        "name": "Enable charger"
       }
     },
     "button": {
-      "evse_energy_star_time_get": {
+      "ha_evse_charger_time_get": {
         "name": "Sync Time"
       },
-      "evse_energy_star_start_now": {
+      "ha_evse_charger_start_now": {
         "name": "Start Charging"
       }
     },
     "time": {
-      "evse_energy_star_start_time": {
+      "ha_evse_charger_start_time": {
         "name": "Start Time"
       },
-      "evse_energy_star_stop_time": {
+      "ha_evse_charger_stop_time": {
         "name": "Stop Time"
       }
     }

@@ -3,23 +3,27 @@ from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.typing import ConfigType
 from .coordinator import EVSECoordinator
-from .const import DOMAIN
+from .const import (
+    DOMAIN,
+    CONF_HOST,
+)
+from .data import EvseEnergyStarData
 
-_LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = ["sensor", "select", "button", "number", "switch", "time"]
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    host = entry.data.get("host") or entry.options.get("host")
+async def async_setup_entry(hass: HomeAssistant, entry: EvseEnergyStarData) -> bool:
+    host = entry.options.get(CONF_HOST, entry.data.get(CONF_HOST))
     coordinator = EVSECoordinator(hass, host, entry)
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
         "coordinator": coordinator,
-        "host": host,
-        "device_name_slug": coordinator.device_name_slug,  # ✅ одразу зберігаємо
+        CONF_HOST: host,
+        "device_name_slug": coordinator.device_name_slug,
     }
 
-    _LOGGER.info(
+    LOGGER.info(
         "__init__.py → Створено coordinator для %s (%s), частота оновлення: %s сек",
         coordinator.device_name,
         host,
@@ -44,5 +48,5 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Reload EVSE config entry when options are updated."""
-    _LOGGER.debug("update_listener → перезавантаження інтеграції через зміну опцій")
+    LOGGER.debug("update_listener → перезавантаження інтеграції через зміну опцій")
     await hass.config_entries.async_reload(entry.entry_id)

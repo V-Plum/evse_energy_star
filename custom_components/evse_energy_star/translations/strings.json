@@ -1,5 +1,5 @@
 {
-  "title": "EVSE Energy Star",
+  "title": "EVSE Charger",
   "description": "Local integration with the charger via HTTP requests",
   "config": {
     "step": {

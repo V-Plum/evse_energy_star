@@ -6,19 +6,22 @@ from homeassistant.components.text import TextEntity, TextEntityDescription
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from .const import DOMAIN
+from .const import (
+    DOMAIN,
+    CONF_DEVICE_NAME,
+)
 
-_LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 TEXT_DESCRIPTIONS = [
     TextEntityDescription(
         key="startTime",
-        translation_key="evse_energy_star_start_time",
+        translation_key="ha_evse_charger_start_time",
         icon="mdi:clock-time-four-outline"
     ),
     TextEntityDescription(
         key="stopTime",
-        translation_key="evse_energy_star_stop_time",
+        translation_key="ha_evse_charger_stop_time",
         icon="mdi:clock-time-four-outline"
     ),
 ]
@@ -60,7 +63,7 @@ class EVSETimeField(TextEntity):
                         if value is not None:
                             self._attr_native_value = str(value)
         except Exception as err:
-            _LOGGER.warning("time.py → помилка оновлення %s → %s", self._key, err)
+            LOGGER.warning("time.py → помилка оновлення %s → %s", self._key, err)
 
     async def async_set_value(self, value: str):
         try:
@@ -92,13 +95,13 @@ class EVSETimeField(TextEntity):
                     self._attr_native_value = value
                     self.async_write_ha_state()
         except Exception as err:
-            _LOGGER.error("time.py → помилка запису %s = %s → %s", self._key, value, err)
+            LOGGER.error("time.py → помилка запису %s = %s → %s", self._key, value, err)
 
     @property
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, self.config_entry.entry_id)},
-            "name": self.config_entry.data.get("device_name", "Eveus Pro"),
+            "name": self.config_entry.data.get(CONF_DEVICE_NAME, "Eveus Pro"),
             "manufacturer": "Energy Star",
             "model": "EVSE",
         }

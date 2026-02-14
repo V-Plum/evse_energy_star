@@ -43,9 +43,17 @@
   },
   "entity": {
     "sensor": {
-      "evse_energy_star_status": {
+      "ha_evse_charger_status": {
         "name": "Статус зарядки",
         "state": {
+          "power_up": "Вмикання",
+          "self_test": "Тест",
+          "standby": "Спайк",
+          "car_connected": "Автомобіль підключений",
+          "charging_complete": "Заряд завершено",
+          "disabled": "Вимкнено",
+          "error": "Помилка",
+
           "no_data": "Немає даних",
           "charging": "Заряд",
           "waiting": "Очікування",
@@ -62,45 +70,57 @@
           "undervoltage": "Низька напруга"
         }
       },
-      "evse_energy_star_current_set": {
+      "ha_evse_charger_current_set": {
         "name": "Струм (встановлений)"
       },
-      "evse_energy_star_current_phase_1": {
+      "ha_evse_charger_current_phase_1": {
         "name": "Струм фаза 1"
       },
-      "evse_energy_star_voltage_phase_1": {
+      "ha_evse_charger_voltage_phase_1": {
         "name": "Напруга фаза 1"
       },
-      "evse_energy_star_temperature_box": {
+      "ha_evse_charger_current_phase_2": {
+        "name": "Струм фаза 2"
+      },
+      "ha_evse_charger_voltage_phase_2": {
+        "name": "Напруга фаза 2"
+      },
+      "ha_evse_charger_current_phase_3": {
+        "name": "Струм фаза 3"
+      },
+      "ha_evse_charger_voltage_phase_3": {
+        "name": "Напруга фаза 3"
+      },
+      "ha_evse_charger_temperature_box": {
         "name": "Темп. корпусу"
       },
-      "evse_energy_star_temperature_socket": {
+      "ha_evse_charger_temperature_socket": {
         "name": "Темп. роз'єму"
       },
-      "evse_energy_star_leakage": {
+      "ha_evse_charger_leakage": {
         "name": "Витік"
       },
-      "evse_energy_star_session_energy": {
+      "ha_evse_charger_session_energy": {
         "name": "Енергія сесії"
       },
-      "evse_energy_star_session_time": {
+      "ha_evse_charger_session_time": {
         "name": "Час сесії"
       },
-      "evse_energy_star_total_energy": {
+      "ha_evse_charger_total_energy": {
         "name": "Загальна енергія"
       },
-      "evse_energy_star_system_time": {
+      "ha_evse_charger_system_time": {
         "name": "Системний час"
       },
-      "evse_energy_star_ground_status": {
+      "ha_evse_charger_ground_status": {
         "name": "Заземлення"
       }
     },
     "number": {
-      "evse_energy_star_current_limit": {
+      "ha_evse_charger_current_limit": {
         "name": "Обмеження струму"
       },
-      "evse_energy_star_voltage_adaptive": {
+      "ha_evse_charger_voltage_adaptive": {
         "name": "Напруга адаптації"
       }
     },
@@ -113,35 +133,38 @@
       }
     },
     "switch": {
-      "evse_energy_star_control_pe": {
+      "ha_evse_charger_control_pe": {
         "name": "Контроль заземлення"
       },
-      "evse_energy_star_restricted_mode": {
+      "ha_evse_charger_restricted_mode": {
         "name": "Режим 16А"
       },
-      "evse_energy_star_schedule": {
+      "ha_evse_charger_schedule": {
         "name": "Заряджати за розкладом"
       },
-      "evse_energy_star_one_charge": {
+      "ha_evse_charger_one_charge": {
         "name": "Один заряд"
       },
-      "evse_energy_star_adaptive_mode": {
+      "ha_evse_charger_adaptive_mode": {
         "name": "Адаптивний режим"
+      },
+      "ha_evse_charger_evse_enabled": {
+        "name": "Увімкнути зарядний пристрій"
       }
     },
     "button": {
-      "evse_energy_star_time_get": {
+      "ha_evse_charger_time_get": {
         "name": "Синхронізувати час"
       },
-      "evse_energy_star_start_now": {
+      "ha_evse_charger_start_now": {
         "name": "Почати зарядку"
       }
     },
     "time": {
-      "evse_energy_star_start_time": {
+      "ha_evse_charger_start_time": {
         "name": "Час старту"
       },
-      "evse_energy_star_stop_time": {
+      "ha_evse_charger_stop_time": {
         "name": "Час завершення"
       }
     }

@@ -1,0 +1,140 @@
+title: EVSE
+views:
+  - title: Charger
+    path: evse
+    type: sections
+    sections:
+
+      - type: grid
+        cards:
+
+          #
+          # ⚡ Charging Control
+          #
+          - type: vertical-stack
+            cards:
+              - type: custom:mushroom-title-card
+                title: ⚡ Керування зарядкою
+
+              - type: custom:mushroom-number-card
+                entity: number.evse_current_limit
+                name: Обмеження струму
+                icon: mdi:current-ac
+
+              - type: custom:mushroom-switch-card
+                entity: switch.evse_charging
+                name: Зарядка увімкнена
+                icon: mdi:ev-station
+
+              - type: custom:mushroom-switch-card
+                entity: switch.evse_adaptive_mode
+                name: Адаптивний режим
+                icon: mdi:auto-fix
+
+          #
+          # 📅 Schedule
+          #
+          - type: vertical-stack
+            cards:
+              - type: custom:mushroom-title-card
+                title: 📅 Розклад зарядки
+
+              - type: entities
+                entities:
+                  - entity: time.evse_schedule_start
+                    name: Час початку
+                  - entity: time.evse_schedule_end
+                    name: Час завершення
+
+              - type: custom:mushroom-switch-card
+                entity: switch.evse_schedule_enabled
+                name: Заряджати за розкладом
+
+              - type: custom:mushroom-button-card
+                name: Зарядити зараз
+                icon: mdi:flash
+                tap_action:
+                  action: call-service
+                  service: switch.turn_on
+                  target:
+                    entity_id: switch.evse_charging
+
+          #
+          # 🔌 Current & Voltage
+          #
+          - type: vertical-stack
+            cards:
+              - type: custom:mushroom-title-card
+                title: 📊 Струм і напруга
+
+              - type: gauge
+                entity: sensor.evse_voltage
+                name: Напруга
+                min: 200
+                max: 260
+
+              - type: gauge
+                entity: sensor.evse_current
+                name: Струм
+                min: 0
+                max: 32
+
+          #
+          # 🌡 Temperature & Leak
+          #
+          - type: vertical-stack
+            cards:
+              - type: custom:mushroom-title-card
+                title: 🌡 Температура та витік
+
+              - type: entities
+                entities:
+                  - entity: sensor.evse_temperature_controller
+                    name: Температура контролера
+                  - entity: sensor.evse_temperature_plug
+                    name: Температура розʼєму
+                  - entity: sensor.evse_leak_current
+                    name: Витік
+                  - entity: binary_sensor.evse_ground_ok
+                    name: Заземлення
+
+          #
+          # 🔋 Energy & Time
+          #
+          - type: vertical-stack
+            cards:
+              - type: custom:mushroom-title-card
+                title: 🔋 Енергія та час
+
+              - type: entities
+                entities:
+                  - entity: sensor.evse_energy_session
+                    name: Енергія сесії
+                  - entity: sensor.evse_energy_total
+                    name: Загальна енергія
+                  - entity: sensor.evse_session_time
+                    name: Час сесії
+                  - entity: sensor.evse_status
+                    name: Статус
+
+          #
+          # 📈 Voltage Graph
+          #
+          - type: custom:apexcharts-card
+            header:
+              title: Напруга
+            series:
+              - entity: sensor.evse_voltage
+                type: area
+            graph_span: 1h
+
+          #
+          # 📈 Current Graph
+          #
+          - type: custom:apexcharts-card
+            header:
+              title: Струм
+            series:
+              - entity: sensor.evse_current
+                type: area
+            graph_span: 1h

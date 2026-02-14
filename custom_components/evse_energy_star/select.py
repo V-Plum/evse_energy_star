@@ -6,9 +6,15 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.components.select import SelectEntityDescription
-from .const import DOMAIN
+from .const import (
+    DOMAIN,
+    TIMEZONE_OPTIONS,
+    UPDATE_RATE_OPTIONS,
+    CONF_HOST,
+    CONF_DEVICE_NAME,
+)
 
-_LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 TIMEZONE_OPTIONS = [str(i) for i in range(-12, 13)]
 UPDATE_RATE_OPTIONS = [str(i) for i in [1, 2, 5, 10, 15, 30, 60]]
@@ -48,10 +54,10 @@ class TimeZoneSelect(CoordinatorEntity, SelectEntity):
 
         if tz_str in self._attr_options:
             self._attr_current_option = tz_str
-            _LOGGER.debug("select.py → timeZone з /init: %s (%s)", tz_str, type(raw).__name__)
+            LOGGER.debug("select.py → timeZone з /init: %s (%s)", tz_str, type(raw).__name__)
         else:
             self._attr_current_option = None
-            _LOGGER.warning("select.py → невірне значення timeZone з /init: '%s'", raw)
+            LOGGER.warning("select.py → невірне значення timeZone з /init: '%s'", raw)
 
     async def async_select_option(self, option: str):
         session = async_get_clientsession(self.coordinator.hass)
@@ -67,9 +73,9 @@ class TimeZoneSelect(CoordinatorEntity, SelectEntity):
             self._attr_current_option = option
             await self.coordinator.async_request_refresh()
             self.async_write_ha_state()
-            _LOGGER.debug("select.py → timeZone змінено на %s через /timer", option)
+            LOGGER.debug("select.py → timeZone змінено на %s через /timer", option)
         except Exception as err:
-            _LOGGER.error("select.py → помилка запиту /timer: timeZone=%s → %s", option, repr(err))
+            LOGGER.error("select.py → помилка запиту /timer: timeZone=%s → %s", option, repr(err))
 
     @property
     def available(self):
@@ -79,7 +85,7 @@ class TimeZoneSelect(CoordinatorEntity, SelectEntity):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, self.config_entry.entry_id)},
-            "name": self.config_entry.data.get("device_name", "Eveus Pro"),
+            "name": self.config_entry.data.get(CONF_DEVICE_NAME, "Eveus Pro"),
             "manufacturer": "Energy Star",
             "model": "EVSE",
             "sw_version": self.coordinator.data.get("fwVersion")
@@ -112,9 +118,9 @@ class UpdateRateSelect(SelectEntity):
             )
             self._attr_current_option = option
             self.async_write_ha_state()
-            _LOGGER.info("select.py → update_rate змінено на %s сек", option)
+            LOGGER.info("select.py → update_rate змінено на %s сек", option)
         except Exception as err:
-            _LOGGER.error("select.py → помилка запису update_rate=%s → %s", option, repr(err))
+            LOGGER.error("select.py → помилка запису update_rate=%s → %s", option, repr(err))
 
     @property
     def available(self):
@@ -124,7 +130,7 @@ class UpdateRateSelect(SelectEntity):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, self.config_entry.entry_id)},
-            "name": self.config_entry.data.get('device_name', 'Eveus Pro'),
+            "name": self.config_entry.data.get(CONF_DEVICE_NAME, 'Eveus Pro'),
             "manufacturer": "Energy Star",
             "model": "EVSE",
             "sw_version": self.coordinator.data.get("fwVersion")

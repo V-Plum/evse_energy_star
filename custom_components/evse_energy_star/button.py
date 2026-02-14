@@ -8,7 +8,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .const import DOMAIN
 
-_LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback):
     coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
@@ -24,7 +24,7 @@ class SyncTimeButton(CoordinatorEntity, ButtonEntity):
         super().__init__(coordinator)
         self.coordinator = coordinator
         self.config_entry = config_entry
-        self._attr_translation_key = "evse_energy_star_time_get"
+        self._attr_translation_key = "ha_evse_charger_time_get"
         self._attr_unique_id = f"time_get_{config_entry.entry_id}"
         self._attr_icon = "mdi:clock-check-outline"
         self._attr_should_poll = False
@@ -38,11 +38,11 @@ class SyncTimeButton(CoordinatorEntity, ButtonEntity):
                 tz = int(float(str(raw_tz).strip()))
             except Exception:
                 tz = 0
-                _LOGGER.warning("button.py → невірне значення timeZone: '%s'", raw_tz)
+                LOGGER.warning("button.py → невірне значення timeZone: '%s'", raw_tz)
 
             local_ts = int(datetime.now().timestamp())
             system_time = local_ts + tz * 3600
-            _LOGGER.debug("button.py → Синхронізація часу: systemTime=%s", system_time)
+            LOGGER.debug("button.py → Синхронізація часу: systemTime=%s", system_time)
 
             session = async_get_clientsession(self.coordinator.hass)
             await session.post(
@@ -52,7 +52,7 @@ class SyncTimeButton(CoordinatorEntity, ButtonEntity):
             )
 
         except Exception as err:
-            _LOGGER.error("button.py → помилка синхронізації часу: %s", repr(err))
+            LOGGER.error("button.py → помилка синхронізації часу: %s", repr(err))
 
     @property
     def available(self):
@@ -73,7 +73,7 @@ class ChargeNowButton(CoordinatorEntity, ButtonEntity):
         super().__init__(coordinator)
         self.coordinator = coordinator
         self.config_entry = config_entry
-        self._attr_translation_key = "evse_energy_star_start_now"
+        self._attr_translation_key = "ha_evse_charger_start_now"
         self._attr_unique_id = f"start_now_{config_entry.entry_id}"
         self._attr_icon = "mdi:battery-charging-high"
         self._attr_should_poll = False
@@ -88,7 +88,7 @@ class ChargeNowButton(CoordinatorEntity, ButtonEntity):
                 tz = int(float(str(tz_raw).strip()))
             except Exception:
                 tz = 0
-                _LOGGER.warning("chargeNow → невірне значення timeZone: '%s'", tz_raw)
+                LOGGER.warning("chargeNow → невірне значення timeZone: '%s'", tz_raw)
 
             start = data.get("startTime", "23:00")
             stop = data.get("stopTime", "07:00")
@@ -112,7 +112,7 @@ class ChargeNowButton(CoordinatorEntity, ButtonEntity):
                 data=payload_timer,
                 headers={"Content-Type": "application/x-www-form-urlencoded"}
             )
-            _LOGGER.debug("chargeNow → /timer: %s", payload_timer)
+            LOGGER.debug("chargeNow → /timer: %s", payload_timer)
 
             await session.post(
                 f"http://{self.coordinator.host}/pageEvent",
@@ -130,10 +130,10 @@ class ChargeNowButton(CoordinatorEntity, ButtonEntity):
                 headers={"Content-Type": "application/x-www-form-urlencoded"}
             )
 
-            _LOGGER.debug("chargeNow → Зарядка активована")
+            LOGGER.debug("chargeNow → Зарядка активована")
 
         except Exception as err:
-            _LOGGER.error("chargeNow → помилка запиту: %s", repr(err))
+            LOGGER.error("chargeNow → помилка запиту: %s", repr(err))
 
     @property
     def available(self):

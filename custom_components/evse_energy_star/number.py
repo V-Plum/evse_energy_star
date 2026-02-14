@@ -7,12 +7,12 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .const import DOMAIN
 
-_LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 NUMBER_DEFINITIONS = [
     {
         "key": "currentSet",
-        "id": "evse_energy_star_current_limit",
+        "id": "ha_evse_charger_current_limit",
         "icon": "mdi:current-dc",
         "min": 6,
         "max": 32,
@@ -21,7 +21,7 @@ NUMBER_DEFINITIONS = [
     },
     {
         "key": "aiVoltage",
-        "id": "evse_energy_star_voltage_adaptive",
+        "id": "ha_evse_charger_voltage_adaptive",
         "icon": "mdi:flash-outline",
         "min": 180,
         "max": 240,
@@ -94,7 +94,7 @@ class EVSENumber(CoordinatorEntity, NumberEntity):
             await self.coordinator.async_request_refresh()
             self.async_write_ha_state()
         except Exception as err:
-            _LOGGER.error("number.py → помилка запису %s = %s → %s", self._key, value, repr(err))
+            LOGGER.error("number.py → помилка запису %s = %s → %s", self._key, value, repr(err))
 
     @property
     def device_info(self):
