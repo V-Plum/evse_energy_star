@@ -1,6 +1,6 @@
 [![SWUbanner](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner-direct-single.svg)](https://stand-with-ukraine.pp.ua/)
 
-![EVSE Charger Logo](./icons//icon.png)
+![EVSE Charger Logo](./icons//logo@2x.png)
 
 # ⚡ EVSE Charger
 
