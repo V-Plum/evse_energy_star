@@ -1,13 +1,11 @@
 {
   "domain": "evse_charger",
   "name": "EVSE Charger",
-  "documentation": "https://github.com/DmytryS/ha-evse-charger",
-  "issue_tracker": "https://github.com/DmytryS/ha-evse-charger",
-  "dependencies": [],
-  "translations": ["en.json", "uk.json"],
   "codeowners": ["@V-Plum", "@DmytryS"],
-  "requirements": [],
-  "iot_class": "local_polling",
   "config_flow": true,
+  "documentation": "https://github.com/DmytryS/ha-evse-charger",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/DmytryS/ha-evse-charger",
+  "requirements": [],
   "version": "0.0.0-unreleased"
 }
