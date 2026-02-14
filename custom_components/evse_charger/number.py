@@ -11,8 +11,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
-    DOMAIN,
     CONF_DEVICE_NAME,
+    DOMAIN,
 )
 from .coordinator import EVSECoordinator
 
@@ -21,7 +21,7 @@ LOGGER = logging.getLogger(__name__)
 NUMBER_DEFINITIONS = [
     {
         "key": "currentSet",
-        "id": "ha_evse_charger_current_limit",
+        "id": "evse_charger_current_limit",
         "icon": "mdi:current-dc",
         "min": 6,
         "max": 32,
@@ -30,7 +30,7 @@ NUMBER_DEFINITIONS = [
     },
     {
         "key": "aiVoltage",
-        "id": "ha_evse_charger_voltage_adaptive",
+        "id": "evse_charger_voltage_adaptive",
         "icon": "mdi:flash-outline",
         "min": 180,
         "max": 240,
@@ -98,7 +98,7 @@ class EVSENumber(CoordinatorEntity, NumberEntity):
         """Return native max value."""
         if self._key == "currentSet":
             design_max = int(float(self.coordinator.data.get("curDesign", 32)))
-            
+
             return design_max
         return self._config["max"]
         LOGGER.debug("number.py → max: %s", self._config["max"])
@@ -106,7 +106,6 @@ class EVSENumber(CoordinatorEntity, NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         """Set native value."""
-
         if self._key == "currentSet":
             value = int(value)
         if self._key == "aiVoltage":

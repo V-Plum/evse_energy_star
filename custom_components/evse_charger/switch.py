@@ -18,9 +18,9 @@ from .coordinator import EVSECoordinator
 LOGGER = logging.getLogger(__name__)
 
 SWITCH_DEFINITIONS = [
-    ("groundCtrl", "ha_evse_charger_control_pe"),
-    ("restrictedMode", "ha_evse_charger_restricted_mode"),
-    ("evseEnabled", "ha_evse_charger_evse_enabled"),
+    ("groundCtrl", "evse_charger_control_pe"),
+    ("restrictedMode", "evse_charger_restricted_mode"),
+    ("evseEnabled", "evse_charger_evse_enabled"),
 ]
 
 
@@ -39,10 +39,10 @@ async def async_setup_entry(
 
     entities.append(EVSEScheduleSwitch(coordinator, entry))
     entities.append(
-        EVSESimpleSwitch(coordinator, entry, "oneCharge", "ha_evse_charger_one_charge")
+        EVSESimpleSwitch(coordinator, entry, "oneCharge", "evse_charger_one_charge")
     )
     entities.append(
-        EVSESimpleSwitch(coordinator, entry, "aiMode", "ha_evse_charger_adaptive_mode")
+        EVSESimpleSwitch(coordinator, entry, "aiMode", "evse_charger_adaptive_mode")
     )
 
     async_add_entities(entities)
@@ -157,7 +157,7 @@ class EVSEScheduleSwitch(SwitchEntity):
         self.coordinator = coordinator
         self.config_entry = config_entry
         self._host = coordinator.host
-        self._attr_translation_key = "ha_evse_charger_schedule"
+        self._attr_translation_key = "evse_charger_schedule"
         self._attr_unique_id = f"schedule_{config_entry.entry_id}"
         self._attr_has_entity_name = True
         self._attr_suggested_object_id = (

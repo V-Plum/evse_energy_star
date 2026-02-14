@@ -5,9 +5,9 @@ from typing import Any
 
 import voluptuous as vol
 from homeassistant import config_entries
+from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import selector
 from homeassistant.helpers.translation import async_get_translations
-from homeassistant.data_entry_flow import FlowResult
 
 from .const import (
     CONF_DEVICE_NAME,

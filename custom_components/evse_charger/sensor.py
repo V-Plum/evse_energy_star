@@ -1,7 +1,7 @@
 """Sensor entity for EVSE Charger."""
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from homeassistant.components.sensor import (
@@ -10,6 +10,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -25,10 +26,10 @@ from .coordinator import EVSECoordinator
 LOGGER = logging.getLogger(__name__)
 
 SENSOR_DEFINITIONS = [
-    ("state", "ha_evse_charger_status", None, None, None, None),
+    ("state", "evse_charger_status", None, None, None, None),
     (
         "currentSet",
-        "ha_evse_charger_current_set",
+        "evse_charger_current_set",
         "A",
         SensorStateClass.MEASUREMENT,
         SensorDeviceClass.CURRENT,
@@ -36,7 +37,7 @@ SENSOR_DEFINITIONS = [
     ),
     (
         "curMeas1",
-        "ha_evse_charger_current_phase_1",
+        "evse_charger_current_phase_1",
         "A",
         SensorStateClass.MEASUREMENT,
         SensorDeviceClass.CURRENT,
@@ -44,7 +45,7 @@ SENSOR_DEFINITIONS = [
     ),
     (
         "voltMeas1",
-        "ha_evse_charger_voltage_phase_1",
+        "evse_charger_voltage_phase_1",
         "V",
         SensorStateClass.MEASUREMENT,
         SensorDeviceClass.VOLTAGE,
@@ -52,7 +53,7 @@ SENSOR_DEFINITIONS = [
     ),
     (
         "temperature1",
-        "ha_evse_charger_temperature_box",
+        "evse_charger_temperature_box",
         "°C",
         SensorStateClass.MEASUREMENT,
         SensorDeviceClass.TEMPERATURE,
@@ -60,7 +61,7 @@ SENSOR_DEFINITIONS = [
     ),
     (
         "temperature2",
-        "ha_evse_charger_temperature_socket",
+        "evse_charger_temperature_socket",
         "°C",
         SensorStateClass.MEASUREMENT,
         SensorDeviceClass.TEMPERATURE,
@@ -68,15 +69,15 @@ SENSOR_DEFINITIONS = [
     ),
     (
         "leakValue",
-        "ha_evse_charger_leakage",
-        "мА",
+        "evse_charger_leakage",
+        "mA",
         SensorStateClass.MEASUREMENT,
         None,
         None,
     ),
     (
         "sessionEnergy",
-        "ha_evse_charger_session_energy",
+        "evse_charger_session_energy",
         "kWh",
         SensorStateClass.TOTAL_INCREASING,
         SensorDeviceClass.ENERGY,
@@ -84,15 +85,15 @@ SENSOR_DEFINITIONS = [
     ),
     (
         "sessionTime",
-        "ha_evse_charger_session_time",
-        "s",
-        SensorStateClass.MEASUREMENT,
+        "evse_charger_session_time",
+        UnitOfTime.SECONDS,
         None,
+        SensorDeviceClass.DURATION,
         None,
     ),
     (
         "totalEnergy",
-        "ha_evse_charger_total_energy",
+        "evse_charger_total_energy",
         "kWh",
         SensorStateClass.TOTAL_INCREASING,
         SensorDeviceClass.ENERGY,
@@ -100,15 +101,15 @@ SENSOR_DEFINITIONS = [
     ),
     (
         "systemTime",
-        "ha_evse_charger_system_time",
+        "evse_charger_system_time",
         None,
         None,
-        None,
+        SensorDeviceClass.TIMESTAMP,
         None,
     ),
     (
         "powerMeas",
-        "ha_evse_charger_power",
+        "evse_charger_power",
         "kW",
         SensorStateClass.MEASUREMENT,
         SensorDeviceClass.POWER,
@@ -119,7 +120,7 @@ SENSOR_DEFINITIONS = [
 THREE_PHASE_SENSORS = [
     (
         "curMeas2",
-        "ha_evse_charger_current_phase_2",
+        "evse_charger_current_phase_2",
         "A",
         SensorStateClass.MEASUREMENT,
         SensorDeviceClass.CURRENT,
@@ -127,7 +128,7 @@ THREE_PHASE_SENSORS = [
     ),
     (
         "curMeas3",
-        "ha_evse_charger_current_phase_3",
+        "evse_charger_current_phase_3",
         "A",
         SensorStateClass.MEASUREMENT,
         SensorDeviceClass.CURRENT,
@@ -135,7 +136,7 @@ THREE_PHASE_SENSORS = [
     ),
     (
         "voltMeas2",
-        "ha_evse_charger_voltage_phase_2",
+        "evse_charger_voltage_phase_2",
         "V",
         SensorStateClass.MEASUREMENT,
         SensorDeviceClass.VOLTAGE,
@@ -143,7 +144,7 @@ THREE_PHASE_SENSORS = [
     ),
     (
         "voltMeas3",
-        "ha_evse_charger_voltage_phase_3",
+        "evse_charger_voltage_phase_3",
         "V",
         SensorStateClass.MEASUREMENT,
         SensorDeviceClass.VOLTAGE,
@@ -153,7 +154,9 @@ THREE_PHASE_SENSORS = [
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Define setup entry."""
     coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
@@ -231,14 +234,12 @@ class EVSESensor(CoordinatorEntity, SensorEntity):
             if self._key in ["sessionEnergy", "totalEnergy"]:
                 return round(float(value), 3)
             if self._key == "sessionTime":
-                total_sec = int(float(value))
-                h = total_sec // 3600
-                m = (total_sec % 3600) // 60
-                s = total_sec % 60
-                return f"{h:02}:{m:02}:{s:02}"
-            
+                # Device reports elapsed charging time in seconds.
+                return int(float(str(value)))
+            if self._key == "systemTime":
+                new_ts = int(float(str(value)))
+                return datetime.fromtimestamp(new_ts, tz=UTC)
             if self._key == "state":
-                # Повертаємо ключ для перекладу з translations
                 return STATUS_MAP.get(value, "unknown")
             return value  # noqa: TRY300
         except Exception:
@@ -251,8 +252,8 @@ class EVSESensor(CoordinatorEntity, SensorEntity):
             try:
                 old_ts = int(float(str(self._attr_native_value or "0")))
                 new_ts = int(float(str(new_value)))
-                old_dt = datetime.fromtimestamp(old_ts)
-                new_dt = datetime.fromtimestamp(new_ts)
+                old_dt = datetime.fromtimestamp(old_ts, tz=UTC)
+                new_dt = datetime.fromtimestamp(new_ts, tz=UTC)
                 if abs((new_dt - old_dt).total_seconds()) <= 2:
                     return
             except Exception:
@@ -285,7 +286,7 @@ class EVSEGroundStatus(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self.coordinator = coordinator
         self.config_entry = config_entry
-        self._attr_translation_key = "ha_evse_charger_ground_status"
+        self._attr_translation_key = "evse_charger_ground_status"
 
         self._attr_has_entity_name = True
         self._attr_suggested_object_id = (

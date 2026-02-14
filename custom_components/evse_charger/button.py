@@ -45,7 +45,7 @@ class SyncTimeButton(CoordinatorEntity, ButtonEntity):
         super().__init__(coordinator)
         self.coordinator = coordinator
         self.config_entry = config_entry
-        self._attr_translation_key = "ha_evse_charger_time_get"
+        self._attr_translation_key = "evse_charger_time_get"
         self._attr_unique_id = f"time_get_{config_entry.entry_id}"
         self._attr_icon = "mdi:clock-check-outline"
         self._attr_should_poll = False
@@ -106,7 +106,7 @@ class ChargeNowButton(CoordinatorEntity, ButtonEntity):
         super().__init__(coordinator)
         self.coordinator = coordinator
         self.config_entry = config_entry
-        self._attr_translation_key = "ha_evse_charger_start_now"
+        self._attr_translation_key = "evse_charger_start_now"
         self._attr_unique_id = f"start_now_{config_entry.entry_id}"
         self._attr_icon = "mdi:battery-charging-high"
         self._attr_should_poll = False

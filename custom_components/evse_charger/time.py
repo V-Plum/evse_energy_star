@@ -21,12 +21,12 @@ LOGGER = logging.getLogger(__name__)
 TEXT_DESCRIPTIONS = [
     TextEntityDescription(
         key="startTime",
-        translation_key="ha_evse_charger_start_time",
+        translation_key="evse_charger_start_time",
         icon="mdi:clock-time-four-outline",
     ),
     TextEntityDescription(
         key="stopTime",
-        translation_key="ha_evse_charger_stop_time",
+        translation_key="evse_charger_stop_time",
         icon="mdi:clock-time-four-outline",
     ),
 ]
