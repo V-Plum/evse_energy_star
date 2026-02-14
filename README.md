@@ -1,91 +1,64 @@
 [![SWUbanner](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner-direct-single.svg)](https://stand-with-ukraine.pp.ua/)
 
-# ⚡ EVSE Energy Star
+![EVSE Charger Logo](./icons//icon.png)
 
-Інтеграція для [Home Assistant](https://www.home-assistant.io/), яка забезпечує локальне керування зарядними станціями **Energy Star Pro** та **Eveus Pro** через їхній вбудований веб-інтерфейс (JSON API).
+# ⚡ EVSE Charger
 
-![Logo](https://raw.githubusercontent.com/DmytryS/ha-evse-charger/main/custom_components/ha-evse-charger/icon.png)
+> [!NOTE]
+> This is not affiliated with [EVEUS][eveus-telegram] in any way. This integration is developed by an individual. Information may vary from their official website.
 
----
+This integration for [Home Assistant][home-assistant] provides ability to control [EVEUS Charger][eveus-telegram].
 
-## 🔧 Можливості
+## Installation
 
-- Відображення статусу зарядної станції
-- Сенсори потужності, напруги, струму, температури
-- Контроль струму заряду, запуск/зупинка зарядки
-- Планування зарядки, таймери
-- Підтримка синхронізації часу
-- Повна локальна робота без хмари
-- UI-конфігурація через Config Flow
-- Підтримка **Energy Star Pro** і **Eveus Pro**
+The quickest way to install this integration is via [HACS][hacs-url] by clicking the button below:
 
----
+[![Add to HACS via My Home Assistant][hacs-install-image]][hasc-install-url]
 
-## 🚀 Встановлення
+If it doesn't work, adding this repository to HACS manually by adding this URL:
 
-### Варіант 1: через HACS (рекомендовано)
+1. Visit **HACS** → **Integrations** → **...** (in the top right) → **Custom repositories**
+2. Click **Add**
+3. Paste `https://github.com/DmytryS/ha-evse-charger` into the **URL** field
+4. Chose **Integration** as a **Category**
+5. **EVSE Charger** will appear in the list of available integrations. Install it normally.
 
-1. Відкрий HACS → "Інтеграції" → "Користувацький репозиторій"
-2. Встав:
-   ```
-   https://github.com/DmytryS/ha-evse-charger
-   ```
-3. Вибери тип: `Integration`
-4. Встанови інтеграцію
-5. Перезапусти Home Assistant
+## 🔧 Feature
 
-### Варіант 2: вручну
+- Charging station status display
+- Power, voltage, current, temperature sensors
+- Charge current control, start/stop charging
+- Charging scheduling, timers
+- Time synchronization support
+- Full local operation without cloud
+- UI configuration via Config Flow
+- **Energy Star Pro** and **Eveus Pro** support
 
-1. Скачай ZIP архів або клонуй репозиторій
-2. Скопіюй папку `ha-evse-charger` у:
-   ```
-   config/custom_components/ha-evse-charger
-   ```
-3. Перезапусти Home Assistant
 
----
+![Dashboard example](./media/dashboard_example.png)
 
-## ⚙️ Налаштування
+## License
 
-1. Перейдіть у `Налаштування` → `Пристрої та служби` → `Додати інтеграцію`
-2. Знайдіть "EVSE Energy Star"
-3. Введіть:
-   - IP-адресу зарядної станції
-   - Ім’я користувача
-   - Пароль
+MIT © [Dmytro Shvaika][DmytryS] + [@V-Plum](https://github.com/V-Plum)
 
----
+<!-- Badges -->
 
-## 🖥️ Платформи
+[gh-release-url]: https://github.com/DmytryS/ha-evse-charger/releases/latest
+[gh-release-image]: https://img.shields.io/github/v/release/DmytryS/ha-evse-charger?style=flat-square
+[gh-downloads-url]: https://github.com/DmytryS/ha-evse-charger/releases
+[gh-downloads-image]: https://img.shields.io/github/downloads/DmytryS/ha-evse-charger/total?style=flat-square
+[hacs-url]: https://github.com/hacs/integration
+[hacs-image]: https://img.shields.io/badge/hacs-default-orange.svg?style=flat-square
 
-- `sensor` — станція, напруга, струм, потужність, температура, енергія
-- `switch` — перемикач режиму, заземлення, розклад
-- `number` — обмеження струму/напруги
-- `button` — ручний запуск зарядки, синхронізація часу
-- `select` — вибір часової зони
+[twitter-url]: https://twitter.com/DmytroShvaika
+[twitter-image]: https://img.shields.io/badge/twitter-%40DmytroShvaika-00ACEE.svg?style=flat-square
 
----
+<!-- References -->
 
-## 📷 Скриншоти
+[home-assistant]: https://www.home-assistant.io/
+[DmytryS]: https://github.com/DmytryS
+[hasc-install-url]: https://my.home-assistant.io/redirect/hacs_repository/?owner=DmytryS&repository=ha-evse-charger&category=integration
+[hacs-install-image]: https://my.home-assistant.io/badges/hacs_repository.svg
+[add-translation]: https://github.com/DmytryS/ha-evse-charger/blob/master/contributing.md#how-to-add-translation
 
-![Dashboard example](https://raw.githubusercontent.com/DmytryS/ha-evse-charger/main/images/dashboard_example.png)
-
----
-
-## 🛠️ Вимоги
-
-- Home Assistant 2023.0 або новіше
-- Зарядна станція Energy Star Pro або Eveus Pro з активним web-інтерфейсом
-
----
-
-## 👤 Автор
-
-**[@V-Plum](https://github.com/V-Plum)**  
-Pull requests, issues та зірочки — вітаються!
-
----
-
-## 📝 Ліцензія
-
-[MIT License](LICENSE)
+[eveus-telegram]: https://t.me/Eveus_Chargers
