@@ -24,7 +24,7 @@ jobs:
         run: python scripts/bump_version ${{ github.ref_name }}
 
       - name: 📦 Create zip package
-        working-directory: custom_components/yasno_outages
+        working-directory: custom_components/evse_charger
         run: zip -r evse-charger.zip .
 
       - name: 📤  Upload zip to release
