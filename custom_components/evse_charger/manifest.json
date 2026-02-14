@@ -1,7 +1,6 @@
 {
   "domain": "evse_charger",
   "name": "EVSE Charger",
-  "translation_key": "evse_charger",
   "documentation": "https://github.com/DmytryS/ha-evse-charger",
   "issue_tracker": "https://github.com/DmytryS/ha-evse-charger",
   "dependencies": [],
