@@ -16,11 +16,6 @@
           "username": "Username",
           "password": "Password",
           "device_type": "Device type"
-        },
-        "error": {
-          "connection": "Connection error",
-          "invalid_ip": "Invalid IP address",
-          "required": "Required field"
         }
       }
     }
