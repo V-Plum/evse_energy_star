@@ -21,7 +21,6 @@
     }
   },
   "options": {
-    "title": "Налаштування EVSE",
     "step": {
       "init": {
         "title": "Оновлення EVSE",

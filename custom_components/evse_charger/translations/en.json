@@ -21,7 +21,6 @@
     }
   },
   "options": {
-    "title": "EVSE Settings",
     "step": {
       "init": {
         "title": "Update EVSE",

@@ -3,11 +3,11 @@
   "name": "EVSE Charger",
   "translation_key": "evse_charger",
   "documentation": "https://github.com/DmytryS/ha-evse-charger",
-  "keywords": ["EVSE", "Energy Star Pro", "Eveus Pro", "Home Assistant", "charging"],
   "dependencies": [],
   "translations": ["en.json", "uk.json"],
   "codeowners": ["@V-Plum", "@DmytryS"],
   "requirements": [],
   "iot_class": "local_polling",
-  "config_flow": true
+  "config_flow": true,
+  "version": "0.0.0-unreleased"
 }
