@@ -5,10 +5,10 @@
 # ⚡ EVSE Charger
 
 > [!NOTE]
-> This is not affiliated with [EVEUS][eveus-telegram] in any way. This integration is developed by an individual. Information may vary from their official website.
+> This is not affiliated with [EVEUS][eveus] in any way. This integration is developed by an individual. Information may vary from their official website.
 
-This integration for [Home Assistant][home-assistant] provides ability to control [EVEUS Charger][eveus-telegram].
-
+This integration for [Home Assistant][home-assistant] provides ability to control [EVEUS Charger][eveus].
+More info [here][eveus-telegram]
 ## Installation
 
 The quickest way to install this integration is via [HACS][hacs-url] by clicking the button below:
@@ -62,3 +62,4 @@ MIT © [Dmytro Shvaika][DmytryS] + [@V-Plum](https://github.com/V-Plum)
 [add-translation]: https://github.com/DmytryS/ha-evse-charger/blob/master/contributing.md#how-to-add-translation
 
 [eveus-telegram]: https://t.me/Eveus_Chargers
+[eveus]: https://www.eveus.com.ua
