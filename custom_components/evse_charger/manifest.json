@@ -1,7 +1,7 @@
 {
-  "domain": "ha_evse_charger",
+  "domain": "evse_charger",
   "name": "EVSE Charger",
-  "translation_key": "ha_evse_charger",
+  "translation_key": "evse_charger",
   "documentation": "https://github.com/DmytryS/ha-evse-charger",
   "image": "https://github.com/DmytryS/ha-evse-charger/raw/main/images/icon.png",
   "keywords": ["EVSE", "Energy Star Pro", "Eveus Pro", "Home Assistant", "charging"],
