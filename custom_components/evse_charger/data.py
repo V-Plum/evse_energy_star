@@ -9,7 +9,6 @@ if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.loader import Integration
 
-    from .api import YasnoApi
     from .coordinator import EvseEnergyStarCoordinator
 
 
@@ -20,6 +19,5 @@ type EvseEnergyStarConfigEntry = ConfigEntry[EvseEnergyStarData]
 class EvseEnergyStarData:
     """Data for the Evse Energy Star integration."""
 
-    # api: YasnoApi
     coordinator: EvseEnergyStarCoordinator
     integration: Integration

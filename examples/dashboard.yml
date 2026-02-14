@@ -4,10 +4,8 @@ views:
     path: evse
     type: sections
     sections:
-
       - type: grid
         cards:
-
           #
           # ⚡ Charging Control
           #

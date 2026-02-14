@@ -1,19 +1,27 @@
+"""EVSE Charger integration."""
+
 import logging
-from homeassistant.core import HomeAssistant
+
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.typing import ConfigType
-from .coordinator import EVSECoordinator
+from homeassistant.core import HomeAssistant
+
 from .const import (
-    DOMAIN,
     CONF_HOST,
+    DOMAIN,
 )
+from .coordinator import EVSECoordinator
 from .data import EvseEnergyStarData
 
 LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = ["sensor", "select", "button", "number", "switch", "time"]
 
-async def async_setup_entry(hass: HomeAssistant, entry: EvseEnergyStarData) -> bool:
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: EvseEnergyStarData,
+) -> bool:
+    """Define setup entry."""
     host = entry.options.get(CONF_HOST, entry.data.get(CONF_HOST))
     coordinator = EVSECoordinator(hass, host, entry)
 
@@ -27,7 +35,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: EvseEnergyStarData) -> b
         "__init__.py → Створено coordinator для %s (%s), частота оновлення: %s сек",
         coordinator.device_name,
         host,
-        entry.options.get("update_rate", 10)
+        entry.options.get("update_rate", 10),
     )
 
     await coordinator.async_config_entry_first_refresh()
@@ -38,13 +46,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: EvseEnergyStarData) -> b
 
     return True
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+
+async def async_unload_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+) -> bool:
+    """Unload EVSE config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
 
     return unload_ok
+
 
 async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Reload EVSE config entry when options are updated."""

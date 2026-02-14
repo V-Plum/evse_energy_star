@@ -34,6 +34,14 @@ ignore = [
     "TD002",   # todo require author tag
     "TD003",   # todo should have a link to an issue
     "FIX002",  # require todo to be resolved
+    "FBT001",
+    "FBT002",
+    "FBT003",
+    "PLR2004",
+    "DTZ007",
+    "PLR0911",
+    "PLR0913",
+    "SIM117"
 ]
 
 [tool.ruff.lint.per-file-ignores]

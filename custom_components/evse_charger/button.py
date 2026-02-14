@@ -1,26 +1,47 @@
+"""Button entity for EVSE Charger."""
+
 import logging
 from datetime import datetime
+from typing import Any
+
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from .const import DOMAIN
+
+from .const import CONF_DEVICE_NAME, DOMAIN
+from .coordinator import EVSECoordinator
 
 LOGGER = logging.getLogger(__name__)
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback):
+
+async def async_setup_entry(
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+) -> None:
+    """Define setup entry."""
     coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
     device_name_slug = hass.data[DOMAIN][entry.entry_id]["device_name_slug"]
 
-    async_add_entities([
-        SyncTimeButton(coordinator, entry, device_name_slug),
-        ChargeNowButton(coordinator, entry, device_name_slug)
-    ])
+    async_add_entities(
+        [
+            SyncTimeButton(coordinator, entry, device_name_slug),
+            ChargeNowButton(coordinator, entry, device_name_slug),
+        ]
+    )
+
 
 class SyncTimeButton(CoordinatorEntity, ButtonEntity):
-    def __init__(self, coordinator, config_entry: ConfigEntry, slug: str):
+    """Sync time button."""
+
+    def __init__(
+        self,
+        coordinator: EVSECoordinator,
+        config_entry: ConfigEntry,
+        slug: str,
+    ) -> None:
+        """Initialize."""
         super().__init__(coordinator)
         self.coordinator = coordinator
         self.config_entry = config_entry
@@ -31,16 +52,17 @@ class SyncTimeButton(CoordinatorEntity, ButtonEntity):
         self._attr_has_entity_name = True
         self._attr_suggested_object_id = f"{slug}_{self._attr_translation_key}"
 
-    async def async_press(self):
+    async def async_press(self) -> None:
+        """Press button."""
         try:
             raw_tz = self.coordinator.data.get("timeZone", 0)
             try:
                 tz = int(float(str(raw_tz).strip()))
             except Exception:
                 tz = 0
-                LOGGER.warning("button.py → невірне значення timeZone: '%s'", raw_tz)
+                LOGGER.exception("button.py → invalid timeZone: '%s'", raw_tz)
 
-            local_ts = int(datetime.now().timestamp())
+            local_ts = int(datetime.now().timestamp())  # noqa: DTZ005
             system_time = local_ts + tz * 3600
             LOGGER.debug("button.py → Синхронізація часу: systemTime=%s", system_time)
 
@@ -48,28 +70,39 @@ class SyncTimeButton(CoordinatorEntity, ButtonEntity):
             await session.post(
                 f"http://{self.coordinator.host}/pageEvent",
                 data=f"systemTime={system_time}",
-                headers={"Content-Type": "application/x-www-form-urlencoded"}
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
             )
 
-        except Exception as err:
-            LOGGER.error("button.py → помилка синхронізації часу: %s", repr(err))
+        except Exception:
+            LOGGER.exception("button.py → error synchronizing time")
 
     @property
-    def available(self):
+    def available(self) -> bool:
+        """Return true if the button is available."""
         return self.coordinator.last_update_success
 
     @property
-    def device_info(self):
+    def device_info(self) -> dict[str, Any]:
+        """Return device info."""
         return {
             "identifiers": {(DOMAIN, self.config_entry.entry_id)},
-            "name": self.config_entry.data.get("device_name", "Eveus Pro"),
+            "name": self.config_entry.data.get(CONF_DEVICE_NAME, "Eveus Pro"),
             "manufacturer": "Energy Star",
             "model": "EVSE",
-            "sw_version": self.coordinator.data.get("fwVersion")
+            "sw_version": self.coordinator.data.get("fwVersion"),
         }
 
+
 class ChargeNowButton(CoordinatorEntity, ButtonEntity):
-    def __init__(self, coordinator, config_entry: ConfigEntry, slug: str):
+    """Charge now button."""
+
+    def __init__(
+        self,
+        coordinator: EVSECoordinator,
+        config_entry: ConfigEntry,
+        slug: str,
+    ) -> None:
+        """Initialize."""
         super().__init__(coordinator)
         self.coordinator = coordinator
         self.config_entry = config_entry
@@ -80,7 +113,8 @@ class ChargeNowButton(CoordinatorEntity, ButtonEntity):
         self._attr_has_entity_name = True
         self._attr_suggested_object_id = f"{slug}_{self._attr_translation_key}"
 
-    async def async_press(self):
+    async def async_press(self) -> None:
+        """Press button."""
         try:
             data = self.coordinator.data
             tz_raw = data.get("timeZone", 0)
@@ -88,7 +122,7 @@ class ChargeNowButton(CoordinatorEntity, ButtonEntity):
                 tz = int(float(str(tz_raw).strip()))
             except Exception:
                 tz = 0
-                LOGGER.warning("chargeNow → невірне значення timeZone: '%s'", tz_raw)
+                LOGGER.exception("chargeNow → invalid timeZone: '%s'", tz_raw)
 
             start = data.get("startTime", "23:00")
             stop = data.get("stopTime", "07:00")
@@ -97,54 +131,58 @@ class ChargeNowButton(CoordinatorEntity, ButtonEntity):
             await session.post(
                 f"http://{self.coordinator.host}/pageEvent",
                 data="oneCharge=0",
-                headers={"Content-Type": "application/x-www-form-urlencoded"}
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
             )
 
             await session.post(
                 f"http://{self.coordinator.host}/pageEvent",
                 data="evseEnabled=1",
-                headers={"Content-Type": "application/x-www-form-urlencoded"}
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
             )
 
-            payload_timer = f"isAlarm=false&startTime={start}&stopTime={stop}&timeZone={tz}"
+            payload_timer = (
+                f"isAlarm=false&startTime={start}&stopTime={stop}&timeZone={tz}"
+            )
             await session.post(
                 f"http://{self.coordinator.host}/timer",
                 data=payload_timer,
-                headers={"Content-Type": "application/x-www-form-urlencoded"}
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
             )
             LOGGER.debug("chargeNow → /timer: %s", payload_timer)
 
             await session.post(
                 f"http://{self.coordinator.host}/pageEvent",
                 data="timeLimit=500000",
-                headers={"Content-Type": "application/x-www-form-urlencoded"}
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
             )
             await session.post(
                 f"http://{self.coordinator.host}/pageEvent",
                 data="energyLimit=10000",
-                headers={"Content-Type": "application/x-www-form-urlencoded"}
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
             )
             await session.post(
                 f"http://{self.coordinator.host}/pageEvent",
                 data="chargeNow=12",
-                headers={"Content-Type": "application/x-www-form-urlencoded"}
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
             )
 
             LOGGER.debug("chargeNow → Зарядка активована")
 
-        except Exception as err:
-            LOGGER.error("chargeNow → помилка запиту: %s", repr(err))
+        except Exception:
+            LOGGER.exception("chargeNow → error requesting")
 
     @property
-    def available(self):
+    def available(self) -> bool:
+        """Return true if the button is available."""
         return self.coordinator.last_update_success
 
     @property
-    def device_info(self):
+    def device_info(self) -> dict[str, Any]:
+        """Return device info."""
         return {
             "identifiers": {(DOMAIN, self.config_entry.entry_id)},
-            "name": self.config_entry.data.get("device_name", "Eveus Pro"),
+            "name": self.config_entry.data.get(CONF_DEVICE_NAME, "Eveus Pro"),
             "manufacturer": "Energy Star",
             "model": "EVSE",
-            "sw_version": self.coordinator.data.get("fwVersion")
+            "sw_version": self.coordinator.data.get("fwVersion"),
         }
