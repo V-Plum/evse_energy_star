@@ -1,6 +1,8 @@
+from typing import Final
+
 DOMAIN: Final = "ha_evse_charger"
 DEFAULT_SCAN_INTERVAL = 30
-TITLE = "EVSE Energy Star"
+TITLE = "EVSE Charger"
 
 STATUS_MAP: Final = {
     0: 'power_up',

@@ -59,7 +59,6 @@ class EVSEEnergyStarConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         CONF_PASSWORD: self.data[CONF_PASSWORD],
                         CONF_DEVICE_TYPE: self.data[CONF_DEVICE_TYPE],
                         CONF_DEVICE_NAME: self.data[CONF_DEVICE_NAME],
-                        "integration_title": integration_title
                     }
                 )
 

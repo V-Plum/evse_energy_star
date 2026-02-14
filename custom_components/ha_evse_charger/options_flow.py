@@ -1,13 +1,9 @@
 from homeassistant import config_entries
 import voluptuous as vol
 from .const import (
-    DOMAIN
     DEVICE_TYPES,
     CONF_HOST,
-    CONF_DEVICE_NAME,
     CONF_DEVICE_TYPE,
-    DEVICE_TYPES,
-    CONF_UPDATE_RATE,
     CONF_USERNAME,
     CONF_PASSWORD,
 )
@@ -30,7 +26,7 @@ class EVSEEnergyStarOptionsFlow(config_entries.OptionsFlow):
                 vol.Optional(CONF_USERNAME, default=current.get(CONF_USERNAME, data.get(CONF_USERNAME, ""))): str,
                 vol.Optional(CONF_PASSWORD, default=current.get(CONF_PASSWORD, data.get(CONF_PASSWORD, ""))): str,
                 vol.Required(CONF_DEVICE_TYPE,
-                             default=current.get(CONF_DEVICE_TYPE, data.get(CONF_DEVICE_TYPE, DEVICE_TYPES[0]))): vol.In(
+                    default=current.get(CONF_DEVICE_TYPE, data.get(CONF_DEVICE_TYPE, DEVICE_TYPES[0]))): vol.In(
                     DEVICE_TYPES),
             }),
         )
