@@ -8,7 +8,7 @@ import aiohttp
 import async_timeout
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import slugify
 
 from .const import CONF_DEVICE_NAME, DEFAULT_SCAN_INTERVAL, DOMAIN
@@ -44,13 +44,15 @@ class EVSECoordinator(DataUpdateCoordinator):
         self.device_name_slug = slugify(self.device_name)
 
     async def _async_update_data(self) -> dict[str, Any]:
+        init_data: dict[str, Any] = {}
+        main_data: dict[str, Any] = {}
+        errors: list[str] = []
+
         try:
             async with async_timeout.timeout(5):
                 async with aiohttp.ClientSession() as session:
                     init_url = f"http://{self.host}/init"
                     LOGGER.debug("EVSECoordinator → POST /init: %s", init_url)
-
-                    init_data = {}
                     try:
                         async with session.post(init_url) as resp_init:
                             if (
@@ -68,17 +70,20 @@ class EVSECoordinator(DataUpdateCoordinator):
                                         type(value).__name__,
                                     )
                             else:
-                                LOGGER.warning(
-                                    "EVSECoordinator → /init → not JSON (%s)",
-                                    resp_init.headers.get("Content-Type"),
+                                msg = (
+                                    "/init invalid response: "
+                                    f"status={resp_init.status}, "
+                                    f"content_type={resp_init.headers.get('Content-Type')}"
                                 )
-                    except Exception:
+                                errors.append(msg)
+                                LOGGER.warning("EVSECoordinator → %s", msg)
+                    except Exception as err:
+                        msg = f"/init request error: {err}"
+                        errors.append(msg)
                         LOGGER.exception("EVSECoordinator → error requesting /init")
 
                     main_url = f"http://{self.host}/main"
                     LOGGER.debug("EVSECoordinator → POST /main: %s", main_url)
-
-                    main_data = {}
                     try:
                         async with session.post(
                             main_url, json={"getState": True}
@@ -98,15 +103,26 @@ class EVSECoordinator(DataUpdateCoordinator):
                                         type(value).__name__,
                                     )
                             else:
-                                LOGGER.warning(
-                                    "EVSECoordinator → /main → not JSON (%s)",
-                                    resp_main.headers.get("Content-Type"),
+                                msg = (
+                                    "/main invalid response: "
+                                    f"status={resp_main.status}, "
+                                    f"content_type={resp_main.headers.get('Content-Type')}"
                                 )
-                    except Exception:
+                                errors.append(msg)
+                                LOGGER.warning("EVSECoordinator → %s", msg)
+                    except Exception as err:
+                        msg = f"/main request error: {err}"
+                        errors.append(msg)
                         LOGGER.exception("EVSECoordinator → error requesting /main")
 
-                    return {**init_data, **main_data}
+        except Exception as err:
+            raise UpdateFailed(f"Coordinator update failed: {err}") from err
 
-        except Exception:
-            LOGGER.exception("EVSECoordinator → general error")
-            return {}
+        data = {**init_data, **main_data}
+        if not data:
+            raise UpdateFailed(
+                "Coordinator update failed: no data returned. "
+                + ("; ".join(errors) if errors else "no additional error details")
+            )
+
+        return data

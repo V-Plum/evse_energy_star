@@ -3,18 +3,18 @@
 import logging
 from typing import Any
 
-import aiohttp
-import async_timeout
 from homeassistant.components.text import TextEntity, TextEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
     CONF_DEVICE_NAME,
-    CONF_HOST,
     DOMAIN,
 )
+from .coordinator import EVSECoordinator
 
 LOGGER = logging.getLogger(__name__)
 
@@ -38,29 +38,30 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Define setup entry."""
-    host = hass.data[DOMAIN][entry.entry_id][CONF_HOST]
+    coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
     slug = hass.data[DOMAIN][entry.entry_id]["device_name_slug"]
 
     entities = [
-        EVSETimeField(entry, host, description, slug)
+        EVSETimeField(coordinator, entry, description, slug)
         for description in TEXT_DESCRIPTIONS
     ]
     async_add_entities(entities)
 
 
-class EVSETimeField(TextEntity):
+class EVSETimeField(CoordinatorEntity, TextEntity):
     """EVSE Time Field."""
 
     def __init__(
         self,
+        coordinator: EVSECoordinator,
         config_entry: ConfigEntry,
-        host: str,
         description: TextEntityDescription,
         slug: str,
     ) -> None:
         """Initialize."""
+        super().__init__(coordinator)
+        self.coordinator = coordinator
         self.config_entry = config_entry
-        self._host = host
         self.entity_description = description
         self._key = description.key
 
@@ -73,53 +74,45 @@ class EVSETimeField(TextEntity):
         self._attr_mode = "text"
         self._attr_suggested_object_id = f"{slug}_{description.translation_key}"
 
-    async def async_update(self) -> None:
-        """Update."""
-        try:
-            async with (
-                async_timeout.timeout(5),
-                aiohttp.ClientSession() as session,
-                session.post(f"http://{self._host}/init") as resp,
-            ):
-                data = await resp.json()
-                value = data.get(self._key)
-                if value is not None:
-                    self._attr_native_value = str(value)
-        except Exception:
-            LOGGER.exception("[time] error on getting update %s", self._key)
+    @property
+    def available(self) -> bool:
+        """Return true if the text entity is available."""
+        return self.coordinator.last_update_success
+
+    @property
+    def native_value(self) -> str | None:
+        """Return native value from coordinator data."""
+        value = self.coordinator.data.get(self._key)
+        return str(value) if value is not None else None
 
     async def async_set_value(self, value: str) -> None:
         """Set value."""
         try:
-            async with (
-                async_timeout.timeout(5),
-                aiohttp.ClientSession() as session,
-                session.post(f"http://{self._host}/init") as resp,
-            ):
-                data = await resp.json()
+            data = dict(self.coordinator.data)
+            updated = {
+                "startTime": data.get("startTime", "00:00"),
+                "stopTime": data.get("stopTime", "00:00"),
+                "timeZone": data.get("timeZone", 0),
+                "isAlarm": str(data.get("isAlarm", "false")).lower(),
+            }
+            updated[self._key] = value
 
-                updated = {
-                    "startTime": data.get("startTime"),
-                    "stopTime": data.get("stopTime"),
-                    "timeZone": data.get("timeZone"),
-                    "isAlarm": str(data.get("isAlarm")).lower(),
-                }
-                updated[self._key] = value
+            payload = (
+                f"isAlarm={updated['isAlarm']}&"
+                f"startTime={updated['startTime']}&"
+                f"stopTime={updated['stopTime']}&"
+                f"timeZone={updated['timeZone']}"
+            )
 
-                payload = (
-                    f"isAlarm={updated['isAlarm']}&"
-                    f"startTime={updated['startTime']}&"
-                    f"stopTime={updated['stopTime']}&"
-                    f"timeZone={updated['timeZone']}"
-                )
+            session = async_get_clientsession(self.coordinator.hass)
+            await session.post(
+                f"http://{self.coordinator.host}/timer",
+                data=payload,
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+            )
 
-                await session.post(
-                    f"http://{self._host}/timer",
-                    data=payload,
-                    headers={"Content-Type": "application/x-www-form-urlencoded"},
-                )
-                self._attr_native_value = value
-                self.async_write_ha_state()
+            await self.coordinator.async_request_refresh()
+            self.async_write_ha_state()
         except Exception:
             LOGGER.exception("[time] error writing %s = %s", self._key, value)
 
