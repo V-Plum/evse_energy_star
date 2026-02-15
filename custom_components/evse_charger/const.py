@@ -3,7 +3,7 @@
 from typing import Final
 
 DOMAIN: Final = "evse_charger"
-DEFAULT_SCAN_INTERVAL = 30
+DEFAULT_SCAN_INTERVAL = 10
 TITLE = "EVSE Charger"
 
 STATUS_MAP: Final = {

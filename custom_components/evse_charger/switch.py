@@ -8,6 +8,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
     CONF_DEVICE_NAME,
@@ -48,7 +49,7 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class EVSESwitch(SwitchEntity):
+class EVSESwitch(CoordinatorEntity, SwitchEntity):
     """EVSE Switch."""
 
     def __init__(
@@ -59,6 +60,7 @@ class EVSESwitch(SwitchEntity):
         translation_key: str,
     ) -> None:
         """Initialize."""
+        super().__init__(coordinator)
         self.coordinator = coordinator
         self.config_entry = config_entry
         self._host = coordinator.host
@@ -149,11 +151,16 @@ class EVSESwitch(SwitchEntity):
         }
 
 
-class EVSEScheduleSwitch(SwitchEntity):
+class EVSEScheduleSwitch(CoordinatorEntity, SwitchEntity):
     """EVSE Schedule Switch."""
 
-    def __init__(self, coordinator: EVSECoordinator, config_entry: ConfigEntry) -> None:
+    def __init__(
+        self,
+        coordinator: EVSECoordinator,
+        config_entry: ConfigEntry,
+    ) -> None:
         """Initialize."""
+        super().__init__(coordinator)
         self.coordinator = coordinator
         self.config_entry = config_entry
         self._host = coordinator.host
@@ -163,6 +170,11 @@ class EVSEScheduleSwitch(SwitchEntity):
         self._attr_suggested_object_id = (
             f"{self.coordinator.device_name_slug}_{self._attr_translation_key}"
         )
+
+    def _handle_coordinator_update(self) -> None:
+        new_value = self.coordinator.data.get("isAlarm")
+        self._attr_native_value = str(new_value).lower() in ["true", "1"]
+        self.async_write_ha_state()
 
     @property
     def available(self) -> bool:
@@ -219,7 +231,7 @@ class EVSEScheduleSwitch(SwitchEntity):
         }
 
 
-class EVSESimpleSwitch(SwitchEntity):
+class EVSESimpleSwitch(CoordinatorEntity, SwitchEntity):
     """EVSE Simple Switch."""
 
     def __init__(
@@ -230,6 +242,7 @@ class EVSESimpleSwitch(SwitchEntity):
         translation_key: str,
     ) -> None:
         """Initialize."""
+        super().__init__(coordinator)
         self.coordinator = coordinator
         self.config_entry = config_entry
         self._host = coordinator.host

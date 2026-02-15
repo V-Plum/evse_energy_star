@@ -14,6 +14,7 @@ from homeassistant.util import slugify
 from .const import (
     CONF_DEVICE_NAME,
     DOMAIN,
+    DEFAULT_SCAN_INTERVAL
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -29,7 +30,7 @@ class EVSECoordinator(DataUpdateCoordinator):
         entry: ConfigEntry,
     ) -> None:
         """Initialize."""
-        update_rate = entry.options.get("update_rate", 10)
+        update_rate = entry.options.get("update_rate", DEFAULT_SCAN_INTERVAL)
         super().__init__(
             hass,
             LOGGER,
