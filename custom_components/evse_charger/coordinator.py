@@ -116,13 +116,14 @@ class EVSECoordinator(DataUpdateCoordinator):
                         LOGGER.exception("EVSECoordinator → error requesting /main")
 
         except Exception as err:
-            raise UpdateFailed(f"Coordinator update failed: {err}") from err
+            error_message = f"Coordinator update failed: {err}"
+            raise UpdateFailed(error_message) from err
 
         data = {**init_data, **main_data}
         if not data:
-            raise UpdateFailed(
-                "Coordinator update failed: no data returned. "
-                + ("; ".join(errors) if errors else "no additional error details")
+            error_message = "Coordinator update failed: no data returned. " + (
+                "; ".join(errors) if errors else "no additional error details"
             )
+            raise UpdateFailed(error_message)
 
         return data
