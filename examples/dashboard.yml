@@ -6,133 +6,83 @@ views:
     sections:
       - type: grid
         cards:
-          #
-          # ⚡ Charging Control
-          #
-          - type: vertical-stack
-            cards:
-              - type: custom:mushroom-title-card
-                title: ⚡ Керування зарядкою
-
-              - type: custom:mushroom-number-card
-                entity: number.evse_current_limit
-                name: Обмеження струму
+          - type: entities
+            title: ⚡ Charger control
+            entities:
+              - entity: number.eveus_pro_current_limit
+                name: Current limit
                 icon: mdi:current-ac
-
-              - type: custom:mushroom-switch-card
-                entity: switch.evse_charging
-                name: Зарядка увімкнена
+              - entity: switch.eveus_pro_enable_charger
+                name: Enabled
                 icon: mdi:ev-station
-
-              - type: custom:mushroom-switch-card
-                entity: switch.evse_adaptive_mode
-                name: Адаптивний режим
+              - entity: switch.eveus_pro_adaptive_mode
+                name: Adaptive mode
                 icon: mdi:auto-fix
-
-          #
-          # 📅 Schedule
-          #
-          - type: vertical-stack
-            cards:
-              - type: custom:mushroom-title-card
-                title: 📅 Розклад зарядки
-
-              - type: entities
-                entities:
-                  - entity: time.evse_schedule_start
-                    name: Час початку
-                  - entity: time.evse_schedule_end
-                    name: Час завершення
-
-              - type: custom:mushroom-switch-card
-                entity: switch.evse_schedule_enabled
-                name: Заряджати за розкладом
-
-              - type: custom:mushroom-button-card
-                name: Зарядити зараз
-                icon: mdi:flash
-                tap_action:
-                  action: call-service
-                  service: switch.turn_on
-                  target:
-                    entity_id: switch.evse_charging
-
-          #
-          # 🔌 Current & Voltage
-          #
-          - type: vertical-stack
-            cards:
-              - type: custom:mushroom-title-card
-                title: 📊 Струм і напруга
-
-              - type: gauge
-                entity: sensor.evse_voltage
-                name: Напруга
+      - type: grid
+        cards:
+          - type: entities
+            title: 📅 Charging schedule
+            entities:
+              - entity: time.eveus_pro_start_time
+                name: Start time
+              - entity: time.eveus_pro_stop_time
+                name: End time
+              - entity: switch.eveus_pro_scheduled_charging
+                name: Schedule
+              - name: Charge now
+                entity: button.eveus_pro_start_charging
+      - type: grid
+        cards:
+          - type: entities
+            title: 📊 Voltage and current
+            entities:
+              - entity: number.eveus_pro_adaptive_voltage
+                name: Voltage
                 min: 200
                 max: 260
-
-              - type: gauge
-                entity: sensor.evse_current
-                name: Струм
+              - entity: number.eveus_pro_current_limit
+                name: Current
                 min: 0
                 max: 32
-
-          #
-          # 🌡 Temperature & Leak
-          #
-          - type: vertical-stack
-            cards:
-              - type: custom:mushroom-title-card
-                title: 🌡 Температура та витік
-
-              - type: entities
-                entities:
-                  - entity: sensor.evse_temperature_controller
-                    name: Температура контролера
-                  - entity: sensor.evse_temperature_plug
-                    name: Температура розʼєму
-                  - entity: sensor.evse_leak_current
-                    name: Витік
-                  - entity: binary_sensor.evse_ground_ok
-                    name: Заземлення
-
-          #
-          # 🔋 Energy & Time
-          #
-          - type: vertical-stack
-            cards:
-              - type: custom:mushroom-title-card
-                title: 🔋 Енергія та час
-
-              - type: entities
-                entities:
-                  - entity: sensor.evse_energy_session
-                    name: Енергія сесії
-                  - entity: sensor.evse_energy_total
-                    name: Загальна енергія
-                  - entity: sensor.evse_session_time
-                    name: Час сесії
-                  - entity: sensor.evse_status
-                    name: Статус
-
-          #
-          # 📈 Voltage Graph
-          #
-          - type: custom:apexcharts-card
-            header:
-              title: Напруга
-            series:
-              - entity: sensor.evse_voltage
-                type: area
-            graph_span: 1h
-
-          #
-          # 📈 Current Graph
-          #
-          - type: custom:apexcharts-card
-            header:
-              title: Струм
-            series:
-              - entity: sensor.evse_current
-                type: area
-            graph_span: 1h
+      - type: grid
+        cards:
+          - type: entities
+            title: 🌡 Temperature and leak
+            entities:
+              - entity: sensor.eveus_pro_box_temperature
+                name: Box temperature
+              - entity: sensor.eveus_pro_socket_temperature
+                name: Socket temperature
+              - entity: sensor.eveus_pro_leakage
+                name: Leak
+              - entity: sensor.eveus_pro_ground_status
+                name: Ground
+      - type: grid
+        cards:
+          - type: entities
+            title: 🔋 Session
+            entities:
+              - entity: sensor.eveus_pro_session_energy
+                name: Session energy
+              - entity: sensor.eveus_pro_session_duration
+                name: Session duration
+              - entity: sensor.eveus_pro_total_energy
+                name: Total energy
+              - entity: sensor.eveus_pro_charging_status
+                name: Status
+      - type: grid
+        cards:
+          - type: history-graph
+            title: Voltage
+            entities:
+              - sensor.eveus_pro_phase_1_voltage
+              - sensor.eveus_pro_phase_2_voltage
+              - sensor.eveus_pro_phase_3_voltage
+      - type: grid
+        cards:
+          - type: history-graph
+            title: Current
+            entities:
+              - sensor.eveus_pro_phase_1_current
+              - sensor.eveus_pro_phase_2_current
+              - sensor.eveus_pro_phase_3_current
