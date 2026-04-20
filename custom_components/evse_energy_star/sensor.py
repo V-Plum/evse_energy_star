@@ -76,9 +76,9 @@ class EVSESensor(CoordinatorEntity, SensorEntity):
             return None
         try:
             if self._key == "curMeas1":
-                return round(float(value) / 10, 2)
+                return round(float(value), 2)
             if self._key in ["sessionEnergy", "totalEnergy"]:
-                return round(float(value) / 10, 3)
+                return round(float(value), 3)
             if self._key == "sessionTime":
                 total_sec = int(float(value))
                 h = total_sec // 3600
