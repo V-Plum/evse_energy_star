@@ -93,7 +93,11 @@
         "name": "Системний час"
       },
       "evse_energy_star_ground_status": {
-        "name": "Заземлення"
+        "name": "Заземлення (статус)",
+        "state": {
+          "ok": "Є заземлення",
+          "no_ground": "Немає заземлення"
+        }
       }
     },
     "number": {
@@ -143,6 +147,11 @@
       },
       "evse_energy_star_stop_time": {
         "name": "Час завершення"
+      }
+    },
+    "binary_sensor": {
+      "evse_energy_star_ground": {
+        "name": "Заземлення"
       }
     }
   },
