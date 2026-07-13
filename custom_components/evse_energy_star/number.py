@@ -5,7 +5,11 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from .const import DOMAIN
+from .const import (
+    DOMAIN,
+    FALLBACK_DESIGN_CURRENT,
+    RESTRICTED_MODE_LIMIT,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -64,21 +68,42 @@ class EVSENumber(CoordinatorEntity, NumberEntity):
 
     @property
     def native_value(self):
-        value = self.coordinator.data.get(self._key)
+        # effective(), а не data.get(): одразу після запису станція ще секунду-дві
+        # віддає старе значення, і повзунок стрибав би назад.
+        value = self.coordinator.effective(self._key)
         return float(value) if value is not None else None
 
     @property
     def native_max_value(self):
-        if self._key == "currentSet":
-            current = self.coordinator.data.get("currentSet")
-            if current is not None:
-                self._restricted_mode = float(current) <= 16
-            design_max = float(self.coordinator.data.get("curDesign", 32))
+        """Стеля струму.
+
+        Раніше тут режим обмеження ВИВОДИВСЯ зі струму на кожному звертанні:
+
+            self._restricted_mode = float(current) <= 16
             return 16 if self._restricted_mode else design_max
+
+        Через це виникало замкнене коло. Вимкнув режим -> веб-логіка ставить
+        струм 16 -> "16 <= 16, отже режим увімкнено" -> стеля знову 16 ->
+        підняти повзунок вище 16 неможливо взагалі. Саме тому рідний веб-інтерфейс
+        "працював краще".
+
+        Тепер режим — це СТАН у координаторі (як змінна сторінки у веб-інтерфейсі),
+        а не здогадка за струмом. Стеля береться зі станції: curDesign.
+        """
+        if self._key == "currentSet":
+            if self.coordinator.restricted_mode:
+                return float(RESTRICTED_MODE_LIMIT)
+            design_max = self.coordinator.effective("curDesign", FALLBACK_DESIGN_CURRENT)
+            try:
+                return float(design_max)
+            except (TypeError, ValueError):
+                return float(FALLBACK_DESIGN_CURRENT)
         return self._config["max"]
 
     async def async_set_native_value(self, value: float):
-        payload = f"{self._key}={value}"
+        # Станція приймає цілі ампери; 16.0 у payload вона не зрозуміє так, як 16.
+        payload_value = int(value) if float(value).is_integer() else value
+        payload = f"{self._key}={payload_value}"
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
             "pageEvent": self._key
@@ -91,8 +116,17 @@ class EVSENumber(CoordinatorEntity, NumberEntity):
                 data=payload,
                 headers=headers
             )
-            await self.coordinator.async_request_refresh()
+            # Памʼятаємо намір: наступні 1-2 відповіді /main ще міститимуть старе
+            # значення (станція застосовує команду із затримкою).
+            self.coordinator.note_write(self._key, payload_value)
+
+            # Підняли струм вище межі -> обмежений режим знято. Рівно так само
+            # чинить веб-інтерфейс станції при оновленні даних.
+            if self._key == "currentSet" and float(value) > RESTRICTED_MODE_LIMIT:
+                self.coordinator.set_restricted_mode(False)
+
             self.async_write_ha_state()
+            await self.coordinator.async_request_refresh()
         except Exception as err:
             _LOGGER.error("number.py → помилка запису %s = %s → %s", self._key, value, repr(err))
 
