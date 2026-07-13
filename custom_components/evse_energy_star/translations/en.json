@@ -93,7 +93,11 @@
         "name": "System Time"
       },
       "evse_energy_star_ground_status": {
-        "name": "Ground Status"
+        "name": "Ground (status)",
+        "state": {
+          "ok": "Ground present",
+          "no_ground": "No ground"
+        }
       }
     },
     "number": {
@@ -143,6 +147,11 @@
       },
       "evse_energy_star_stop_time": {
         "name": "Stop Time"
+      }
+    },
+    "binary_sensor": {
+      "evse_energy_star_ground": {
+        "name": "Ground"
       }
     }
   },

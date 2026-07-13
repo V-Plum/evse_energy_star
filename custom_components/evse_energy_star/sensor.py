@@ -131,6 +131,21 @@ class EVSESensor(CoordinatorEntity, SensorEntity):
         }
 
 class EVSEGroundStatus(CoordinatorEntity, SensorEntity):
+    """Заземлення — текстовий статус.
+
+    DEPRECATED. Замість цього використовуйте binary_sensor.*_ground
+    (device_class: safety) — він потрапляє в картки "Проблеми", має автоматичну
+    іконку й дозволяє тригерити автоматизації по `to: "on"`.
+
+    Сутність лишається, щоб не ламати наявні дашборди й автоматизації, але
+    стани більше НЕ емодзі: раніше тут було "✅" / "❌", і з такого стану
+    неможливо ні побудувати нормальну автоматизацію, ні зібрати історію.
+    Тепер це звичайний ENUM з перекладеними станами.
+    """
+
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ["ok", "no_ground"]
+
     def __init__(self, coordinator, config_entry: ConfigEntry):
         super().__init__(coordinator)
         self.coordinator = coordinator
@@ -147,11 +162,18 @@ class EVSEGroundStatus(CoordinatorEntity, SensorEntity):
 
     @property
     def native_value(self):
-        return "✅" if bool(self.coordinator.data.get("ground", 0)) else "❌"
+        value = self.coordinator.data.get("ground")
+        if value is None:
+            return None
+        return "ok" if bool(value) else "no_ground"
 
     @property
     def icon(self):
-        return "mdi:checkbox-marked-circle" if self.native_value == "✅" else "mdi:close-circle-outline"
+        return (
+            "mdi:power-plug"
+            if self.native_value == "ok"
+            else "mdi:power-plug-off"
+        )
 
     def _handle_coordinator_update(self):
         self.async_write_ha_state()
