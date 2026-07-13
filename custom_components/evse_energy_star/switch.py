@@ -3,7 +3,11 @@ from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from .const import DOMAIN
+from .const import (
+    DOMAIN,
+    RESTRICTED_MODE_CURRENT,
+    UNRESTRICTED_MODE_CURRENT,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -44,45 +48,71 @@ class EVSESwitch(SwitchEntity):
     @property
     def is_on(self):
         if self._key == "restrictedMode":
-            return float(self.coordinator.data.get("currentSet", 32)) <= 16
-        return bool(self.coordinator.data.get(self._key))
+            # СТАН з координатора, а не здогадка "currentSet <= 16".
+            # Стара версія виводила режим зі струму, і вимкнути його було
+            # неможливо: вимикаєш -> ставиться струм 16 -> "16 <= 16" ->
+            # перемикач знову вмикається сам.
+            return self.coordinator.restricted_mode
+        # effective(): станція застосовує команду із затримкою, і без цього
+        # перемикач "вискакував назад" одразу після натискання.
+        return bool(self.coordinator.effective(self._key))
 
     async def async_turn_on(self):
         if self._key == "restrictedMode":
-            await self._set_current_if_needed(12, only_if_high=True)
+            # Веб-інтерфейс станції при УВІМКНЕННІ режиму ставить 12 А
+            # (не 16 — так, це його реальна поведінка) і опускає стелю до 16.
+            await self._apply_restricted_mode(True, RESTRICTED_MODE_CURRENT)
         else:
             await self._send_event(True)
 
     async def async_turn_off(self):
         if self._key == "restrictedMode":
-            await self._set_current_if_needed(16, only_if_low=True)
+            # При ВИМКНЕННІ веб-інтерфейс ставить 16 А, а стелю піднімає до
+            # curDesign. Струм НЕ стрибає одразу на 32 — його піднімає користувач
+            # повзунком. Свідомо повторюємо це: самовільно подвоювати струм
+            # зарядки від одного кліку перемикача було б небезпечно.
+            await self._apply_restricted_mode(False, UNRESTRICTED_MODE_CURRENT)
         else:
             await self._send_event(False)
 
+    async def _apply_restricted_mode(self, restricted: bool, target_current: int):
+        """Перемкнути режим обмеження струму.
+
+        На станцію летить ЛИШЕ currentSet — поля restrictedMode в неї немає
+        взагалі. Сам режим живе в координаторі, як змінна сторінки у
+        веб-інтерфейсі станції.
+        """
+        # Спершу режим, потім струм: інакше синхронізація в координаторі могла б
+        # застати проміжний стан і зробити хибний висновок.
+        self.coordinator.set_restricted_mode(restricted)
+
+        if not await self._post("currentSet", target_current):
+            return
+
+        self.coordinator.note_write("currentSet", target_current)
+        self.async_write_ha_state()
+        await self.coordinator.async_request_refresh()
+
     async def _send_event(self, state: bool):
-        payload = f"{self._key}={'1' if state else '0'}"
+        value = 1 if state else 0
+        if await self._post(self._key, value):
+            self.coordinator.note_write(self._key, value)
+            self.async_write_ha_state()
+            await self.coordinator.async_request_refresh()
+
+    async def _post(self, key: str, value) -> bool:
+        payload = f"{key}={value}"
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
-            "pageEvent": self._key
+            "pageEvent": key,
         }
         session = async_get_clientsession(self.coordinator.hass)
         try:
             await session.post(f"http://{self._host}/pageEvent", data=payload, headers=headers)
-            await self.coordinator.async_request_refresh()
+            return True
         except Exception as err:
-            _LOGGER.error("switch.py → помилка запиту %s → %s", self._key, repr(err))
-
-    async def _set_current_if_needed(self, target, only_if_high=False, only_if_low=False):
-        current = float(self.coordinator.data.get("currentSet", 32))
-        if (only_if_high and current > target) or (only_if_low and current <= target):
-            payload = f"currentSet={target}"
-            headers = {
-                "Content-Type": "application/x-www-form-urlencoded",
-                "pageEvent": "currentSet"
-            }
-            session = async_get_clientsession(self.coordinator.hass)
-            await session.post(f"http://{self._host}/pageEvent", data=payload, headers=headers)
-            await self.coordinator.async_request_refresh()
+            _LOGGER.error("switch.py → помилка запиту %s=%s → %s", key, value, repr(err))
+            return False
 
     @property
     def device_info(self):
@@ -110,7 +140,7 @@ class EVSEScheduleSwitch(SwitchEntity):
 
     @property
     def is_on(self):
-        value = self.coordinator.data.get("isAlarm")
+        value = self.coordinator.effective("isAlarm")
         return str(value).lower() in ["true", "1"]
 
     async def async_turn_on(self):
@@ -136,6 +166,8 @@ class EVSEScheduleSwitch(SwitchEntity):
             await session.post(f"http://{self._host}/timer", data=payload, headers={
                 "Content-Type": "application/x-www-form-urlencoded"
             })
+            self.coordinator.note_write("isAlarm", "true" if state else "false")
+            self.async_write_ha_state()
             await self.coordinator.async_request_refresh()
         except Exception as err:
             _LOGGER.error("switch.py → помилка оновлення розкладу → %s", repr(err))
@@ -167,10 +199,13 @@ class EVSESimpleSwitch(SwitchEntity):
 
     @property
     def is_on(self):
+        # aiMode читається з aiStatus, але ЗАПИСУЄТЬСЯ як aiMode — тому намір
+        # памʼятаємо під ключем aiMode, а якщо його немає, дивимось на станцію.
         if self._key == "aiMode":
-            val = self.coordinator.data.get("aiStatus")
+            pending = self.coordinator.effective("aiMode")
+            val = pending if pending is not None else self.coordinator.data.get("aiStatus")
         else:
-            val = self.coordinator.data.get(self._key)
+            val = self.coordinator.effective(self._key)
         return str(val).lower() in ["true", "1"]
 
     async def async_turn_on(self):
@@ -180,7 +215,8 @@ class EVSESimpleSwitch(SwitchEntity):
         await self._send(False)
 
     async def _send(self, state: bool):
-        payload = f"{self._key}={'1' if state else '0'}"
+        value = 1 if state else 0
+        payload = f"{self._key}={value}"
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
             "pageEvent": self._key
@@ -188,6 +224,10 @@ class EVSESimpleSwitch(SwitchEntity):
         session = async_get_clientsession(self.coordinator.hass)
         try:
             await session.post(f"http://{self._host}/pageEvent", data=payload, headers=headers)
+            # Без цього перемикач "вискакував назад": станція застосовує команду
+            # із затримкою, і наступне опитування повертало старе значення.
+            self.coordinator.note_write(self._key, value)
+            self.async_write_ha_state()
             await self.coordinator.async_request_refresh()
         except Exception as err:
             _LOGGER.error("switch.py → помилка запиту %s → %s", self._key, repr(err))

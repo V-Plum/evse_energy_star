@@ -1,12 +1,13 @@
 import logging
 from datetime import datetime
+from time import monotonic
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.components.sensor import SensorStateClass, SensorDeviceClass
-from .const import DEFAULT_VALUE_SCALE, DOMAIN, STATUS_MAP
+from .const import DEFAULT_VALUE_SCALE, DOMAIN, STATUS_MAP, SYSTEM_TIME_MIN_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ SENSOR_DEFINITIONS = [
     ("voltMeas1", "evse_energy_star_voltage_phase_1", "V", SensorStateClass.MEASUREMENT, SensorDeviceClass.VOLTAGE, None),
     ("temperature1", "evse_energy_star_temperature_box", "°C", SensorStateClass.MEASUREMENT, SensorDeviceClass.TEMPERATURE, None),
     ("temperature2", "evse_energy_star_temperature_socket", "°C", SensorStateClass.MEASUREMENT, SensorDeviceClass.TEMPERATURE, None),
-    ("leakValue", "evse_energy_star_leakage", "мА", SensorStateClass.MEASUREMENT, None, None),
+    ("leakValue", "evse_energy_star_leakage", "mA", SensorStateClass.MEASUREMENT, SensorDeviceClass.CURRENT, None),
     ("sessionEnergy", "evse_energy_star_session_energy", "kWh", SensorStateClass.TOTAL_INCREASING, SensorDeviceClass.ENERGY, None),
     ("sessionTime", "evse_energy_star_session_time", None, None, None, None),
     ("totalEnergy", "evse_energy_star_total_energy", "kWh", SensorStateClass.TOTAL_INCREASING, SensorDeviceClass.ENERGY, None),
@@ -65,6 +66,9 @@ class EVSESensor(CoordinatorEntity, SensorEntity):
         self._attr_suggested_object_id = f"{self.coordinator.device_name_slug}_{self._attr_translation_key}"
         self._attr_unique_id = f"{translation_key}_{config_entry.entry_id}"
 
+        # Коли востаннє писали стан годинника (див. _handle_coordinator_update)
+        self._system_time_written_at: float | None = None
+
     @property
     def available(self) -> bool:
         return self.coordinator.last_update_success
@@ -104,20 +108,30 @@ class EVSESensor(CoordinatorEntity, SensorEntity):
             return str(value)
 
     def _handle_coordinator_update(self):
-        new_value = self.coordinator.data.get(self._key)
+        # systemTime — це годинник станції: він тікає щосекунди, тобто його
+        # значення змінюється ЗАВЖДИ. Кожна зміна стану в Home Assistant — це
+        # подія на шині і рядок у recorder.
+        #
+        # Старий захист був зламаний. Він пропускав запис, якщо різниця <= 2 с,
+        # АЛЕ не оновлював при цьому опорне значення. Тому різниця накопичувалась:
+        # 1 с -> пропуск, 2 с -> пропуск, 3 с -> "більше двох" -> ЗАПИС. І так по
+        # колу. Замість тиші виходив запис кожні ~3 секунди — 20 подій за хвилину
+        # з одного лише годинника.
+        #
+        # Тепер просто дроселюємо: пишемо не частіше ніж раз на хвилину. Годинник
+        # від цього не стає менш корисним (він потрібен, щоб бачити, чи не збився
+        # час станції, від якого залежить розклад зарядки), але перестає засмічувати
+        # історію.
         if self._key == "systemTime":
-            try:
-                old_str = str(self._attr_native_value)
-                new_str = str(new_value)
-                fmt = "%H:%M:%S"
-                old_dt = datetime.strptime(old_str, fmt)
-                new_dt = datetime.strptime(new_str, fmt)
-                if abs((new_dt - old_dt).total_seconds()) <= 2:
-                    return
-            except Exception as err:
-                _LOGGER.debug("sensor.py → systemTime порівняння: %s", repr(err))
+            now = monotonic()
+            if (
+                self._system_time_written_at is not None
+                and now - self._system_time_written_at < SYSTEM_TIME_MIN_INTERVAL
+            ):
+                return
+            self._system_time_written_at = now
 
-        self._attr_native_value = new_value
+        self._attr_native_value = self.coordinator.data.get(self._key)
         self.async_write_ha_state()
 
     @property
