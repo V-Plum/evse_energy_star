@@ -70,15 +70,34 @@ class EVSECoordinator(DataUpdateCoordinator):
     # Щойно надіслані команди (аналог ignoreCount у веб-інтерфейсі станції)
     # ------------------------------------------------------------------
 
-    def note_write(self, key: str, value: Any, ttl: float = PENDING_WRITE_TTL) -> None:
+    @property
+    def pending_ttl(self) -> float:
+        """Скільки довіряти щойно надісланій команді, поки станція не підтвердила.
+
+        МАЄ масштабуватись від update_rate, а не бути константою.
+
+        Станція застосовує команду із затримкою, тому підтвердження приходить не
+        раніше ніж через одне-два опитування. При update_rate = 30 с фіксовані
+        5 секунд протухали б задовго до наступного опитування — і перемикач
+        вискакував би назад, висячи неправильним до півхвилини. Рівно та проблема,
+        яку ми лагодили; просто вилазила б при повільному опитуванні.
+        """
+        rate = (
+            self.update_interval.total_seconds()
+            if self.update_interval
+            else DEFAULT_UPDATE_RATE
+        )
+        return max(PENDING_WRITE_TTL, rate * 2 + 2)
+
+    def note_write(self, key: str, value: Any, ttl: float | None = None) -> None:
         """Запамʼятати намір: ми щойно надіслали key=value.
 
         Поки станція не підтвердить (або поки не вийде ttl), сутності показують
         надіслане значення, а не застаріле з /main. Без цього перемикачі
-        "вискакують назад": ви натиснули, а наступне опитування за секунду
-        повернуло старе значення.
+        "вискакують назад": ви натиснули, а наступне опитування повернуло старе
+        значення.
         """
-        self._pending[key] = (value, monotonic() + ttl)
+        self._pending[key] = (value, monotonic() + (ttl or self.pending_ttl))
 
     def effective(self, key: str, default: Any = None) -> Any:
         """Значення з урахуванням щойно надісланих команд."""

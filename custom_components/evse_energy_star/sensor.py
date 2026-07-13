@@ -1,13 +1,12 @@
 import logging
 from datetime import datetime
-from time import monotonic
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.components.sensor import SensorStateClass, SensorDeviceClass
-from .const import DEFAULT_VALUE_SCALE, DOMAIN, STATUS_MAP, SYSTEM_TIME_MIN_INTERVAL
+from .const import DEFAULT_VALUE_SCALE, DOMAIN, STATUS_MAP
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -66,11 +65,6 @@ class EVSESensor(CoordinatorEntity, SensorEntity):
         self._attr_suggested_object_id = f"{self.coordinator.device_name_slug}_{self._attr_translation_key}"
         self._attr_unique_id = f"{translation_key}_{config_entry.entry_id}"
 
-        # Коли востаннє писали стан годинника (див. _handle_coordinator_update)
-        self._system_time_written_at: float | None = None
-
-        # Остання записана хвилина тривалості сесії (див. _handle_coordinator_update)
-        self._session_minute: int | None = None
 
     @property
     def available(self) -> bool:
@@ -111,52 +105,17 @@ class EVSESensor(CoordinatorEntity, SensorEntity):
             return str(value)
 
     def _handle_coordinator_update(self):
-        # systemTime — це годинник станції: він тікає щосекунди, тобто його
-        # значення змінюється ЗАВЖДИ. Кожна зміна стану в Home Assistant — це
-        # подія на шині і рядок у recorder.
+        # Жодних власних дроселів тут НЕМАЄ — і це свідомо.
         #
-        # Старий захист був зламаний. Він пропускав запис, якщо різниця <= 2 с,
-        # АЛЕ не оновлював при цьому опорне значення. Тому різниця накопичувалась:
-        # 1 с -> пропуск, 2 с -> пропуск, 3 с -> "більше двох" -> ЗАПИС. І так по
-        # колу. Замість тиші виходив запис кожні ~3 секунди — 20 подій за хвилину
-        # з одного лише годинника.
+        # systemTime і sessionTime — тікаючі лічильники: їхнє значення змінюється
+        # щоразу, коли ми опитуємо станцію. Спокусливо було задушити їх окремим
+        # таймером (так і було зроблено в 1.3.0/1.3.1), але це нав'язує всім
+        # користувачам роздільність, якої вони не просили: хто хоче секундну
+        # телеметрію — має її отримувати.
         #
-        # Тепер просто дроселюємо: пишемо не частіше ніж раз на хвилину. Годинник
-        # від цього не стає менш корисним (він потрібен, щоб бачити, чи не збився
-        # час станції, від якого залежить розклад зарядки), але перестає засмічувати
-        # історію.
-        if self._key == "systemTime":
-            now = monotonic()
-            if (
-                self._system_time_written_at is not None
-                and now - self._system_time_written_at < SYSTEM_TIME_MIN_INTERVAL
-            ):
-                return
-            self._system_time_written_at = now
-
-        # sessionTime — тривалість зарядної сесії. Станція віддає її в секундах,
-        # тобто під час зарядки значення змінюється ЩОСЕКУНДИ. Це той самий
-        # антипатерн, що й systemTime: тікаючий годинник як стан сутності.
-        #
-        # Він був невидимий, поки авто не заряджалось. На живій зарядці цей
-        # сенсор давав 49 подій за хвилину — більше за будь-що інше в домі.
-        #
-        # Пишемо стан лише тоді, коли змінилась ХВИЛИНА. Формат "HH:MM:SS"
-        # зберігається (нічого не ламається), подій стає рівно одна за хвилину,
-        # а показане значення чесне: секунди на момент запису — 00.
-        elif self._key == "sessionTime":
-            raw = self.coordinator.data.get(self._key)
-            if raw is None:
-                return
-            try:
-                minute = int(float(raw)) // 60
-            except (TypeError, ValueError):
-                minute = None
-            if minute is not None:
-                if minute == self._session_minute:
-                    return
-                self._session_minute = minute
-
+        # Частоту подій задає ОДНА ручка: select "update_rate" (1..60 с). Вона ж
+        # визначає, як часто взагалі можна щось записати. Кому заважає шум —
+        # ставить 60 с і отримує одну подію на хвилину з КОЖНОГО сенсора.
         self._attr_native_value = self.coordinator.data.get(self._key)
         self.async_write_ha_state()
 
