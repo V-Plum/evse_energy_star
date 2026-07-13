@@ -69,6 +69,9 @@ class EVSESensor(CoordinatorEntity, SensorEntity):
         # Коли востаннє писали стан годинника (див. _handle_coordinator_update)
         self._system_time_written_at: float | None = None
 
+        # Остання записана хвилина тривалості сесії (див. _handle_coordinator_update)
+        self._session_minute: int | None = None
+
     @property
     def available(self) -> bool:
         return self.coordinator.last_update_success
@@ -130,6 +133,29 @@ class EVSESensor(CoordinatorEntity, SensorEntity):
             ):
                 return
             self._system_time_written_at = now
+
+        # sessionTime — тривалість зарядної сесії. Станція віддає її в секундах,
+        # тобто під час зарядки значення змінюється ЩОСЕКУНДИ. Це той самий
+        # антипатерн, що й systemTime: тікаючий годинник як стан сутності.
+        #
+        # Він був невидимий, поки авто не заряджалось. На живій зарядці цей
+        # сенсор давав 49 подій за хвилину — більше за будь-що інше в домі.
+        #
+        # Пишемо стан лише тоді, коли змінилась ХВИЛИНА. Формат "HH:MM:SS"
+        # зберігається (нічого не ламається), подій стає рівно одна за хвилину,
+        # а показане значення чесне: секунди на момент запису — 00.
+        elif self._key == "sessionTime":
+            raw = self.coordinator.data.get(self._key)
+            if raw is None:
+                return
+            try:
+                minute = int(float(raw)) // 60
+            except (TypeError, ValueError):
+                minute = None
+            if minute is not None:
+                if minute == self._session_minute:
+                    return
+                self._session_minute = minute
 
         self._attr_native_value = self.coordinator.data.get(self._key)
         self.async_write_ha_state()
