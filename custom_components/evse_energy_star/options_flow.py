@@ -1,6 +1,11 @@
 from homeassistant import config_entries
 import voluptuous as vol
-from .const import DOMAIN
+from .const import (
+    DEFAULT_REQUEST_TIMEOUT,
+    DEFAULT_VALUE_SCALE,
+    DOMAIN,
+    VALUE_SCALE_OPTIONS,
+)
 
 DEVICE_TYPES = {
     "1_phase": "1_phase",
@@ -27,6 +32,16 @@ class EVSEEnergyStarOptionsFlow(config_entries.OptionsFlow):
                 vol.Required("device_type",
                              default=current.get("device_type", data.get("device_type", "1_phase"))): vol.In(
                     DEVICE_TYPES),
+                # Тайм-аут запиту. Було жорстко 5 с — станція, яка "задумалась",
+                # роняла ВСІ сутності в unavailable і назад.
+                vol.Required("request_timeout",
+                             default=current.get("request_timeout", DEFAULT_REQUEST_TIMEOUT)): vol.All(
+                    vol.Coerce(int), vol.Range(min=3, max=60)),
+                # Масштаб струму та енергії. Типова прошивка віддає десяті
+                # (curMeas1=160 -> 16.0 A), але не всі — див. issue #7.
+                vol.Required("value_scale",
+                             default=current.get("value_scale", DEFAULT_VALUE_SCALE)): vol.In(
+                    VALUE_SCALE_OPTIONS),
             }),
         )
 

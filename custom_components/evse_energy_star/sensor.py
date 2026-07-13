@@ -6,7 +6,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.components.sensor import SensorStateClass, SensorDeviceClass
-from .const import DOMAIN, STATUS_MAP
+from .const import DEFAULT_VALUE_SCALE, DOMAIN, STATUS_MAP
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -70,15 +70,25 @@ class EVSESensor(CoordinatorEntity, SensorEntity):
         return self.coordinator.last_update_success
 
     @property
+    def _value_scale(self) -> float:
+        """Масштаб телеметрії струму та енергії (див. const.DEFAULT_VALUE_SCALE)."""
+        try:
+            return float(self.config_entry.options.get("value_scale", DEFAULT_VALUE_SCALE))
+        except (TypeError, ValueError):
+            return DEFAULT_VALUE_SCALE
+
+    @property
     def native_value(self):
         value = self.coordinator.data.get(self._key)
         if value is None:
             return None
         try:
-            if self._key == "curMeas1":
-                return round(float(value), 2)
+            # Струм по всіх фазах. Раніше масштабувалась ЛИШЕ фаза 1 — у
+            # трифазних станцій фази 2 і 3 показували значення в 10 разів більші.
+            if self._key in ("curMeas1", "curMeas2", "curMeas3"):
+                return round(float(value) * self._value_scale, 2)
             if self._key in ["sessionEnergy", "totalEnergy"]:
-                return round(float(value), 3)
+                return round(float(value) * self._value_scale, 3)
             if self._key == "sessionTime":
                 total_sec = int(float(value))
                 h = total_sec // 3600
