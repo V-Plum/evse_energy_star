@@ -1,26 +1,12 @@
 {
   "domain": "evse_energy_star",
   "name": "EVSE Energy Star",
-  "translation_key": "evse_energy_star",
-  "version": "1.3.2",
-  "documentation": "https://github.com/V-Plum/evse_energy_star",
-  "image": "https://github.com/V-Plum/evse_energy_star/raw/main/images/icon.png",
-  "keywords": [
-    "EVSE",
-    "Energy Star Pro",
-    "Eveus Pro",
-    "Home Assistant",
-    "charging"
-  ],
+  "codeowners": ["@V-Plum"],
+  "config_flow": true,
   "dependencies": [],
-  "translations": [
-    "en.json",
-    "uk.json"
-  ],
-  "codeowners": [
-    "@V-Plum"
-  ],
-  "requirements": [],
+  "documentation": "https://github.com/V-Plum/evse_energy_star",
   "iot_class": "local_polling",
-  "config_flow": true
+  "issue_tracker": "https://github.com/V-Plum/evse_energy_star/issues",
+  "requirements": [],
+  "version": "1.3.3"
 }

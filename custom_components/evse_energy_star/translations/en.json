@@ -1,6 +1,5 @@
 {
   "config": {
-    "title": "EVSE Energy Star",
     "error": {
       "required": "Required field",
       "connection": "Connection error",
@@ -16,17 +15,11 @@
           "username": "Username",
           "password": "Password",
           "device_type": "Device type"
-        },
-        "error": {
-          "connection": "Connection error",
-          "invalid_ip": "Invalid IP address",
-          "required": "Required field"
         }
       }
     }
   },
   "options": {
-    "title": "EVSE Settings",
     "step": {
       "init": {
         "title": "Update EVSE",

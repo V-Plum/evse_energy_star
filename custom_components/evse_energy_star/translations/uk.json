@@ -1,6 +1,5 @@
 {
   "config": {
-    "title": "EVSE Energy Star",
     "error": {
       "required": "Обов'язкове поле",
       "connection": "Помилка підключення",
@@ -16,17 +15,11 @@
           "username": "Ім’я користувача",
           "password": "Пароль",
           "device_type": "Тип пристрою"
-        },
-        "error": {
-          "connection": "Помилка підключення",
-          "invalid_ip": "Неправильна IP-адреса",
-          "required": "Обов'язкове поле"
         }
       }
     }
   },
   "options": {
-    "title": "Налаштування EVSE",
     "step": {
       "init": {
         "title": "Оновлення EVSE",
