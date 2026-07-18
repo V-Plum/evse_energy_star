@@ -4,6 +4,8 @@
 
 ![Logo](https://raw.githubusercontent.com/V-Plum/evse_energy_star/main/custom_components/evse_energy_star/icon.png)
 
+[![Відкрити у HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=V-Plum&repository=evse_energy_star&category=integration)
+
 ---
 
 ## 🔧 Можливості
