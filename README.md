@@ -1,3 +1,11 @@
+> **Інтеграція більше не підтримується.** Для зарядних станцій Eveus / Energy Star використовуйте
+> [ABovsh/eveus](https://github.com/ABovsh/eveus) — вона є в каталозі HACS, активно розвивається
+> і покриває значно більше можливостей (SOC, тарифи й вартість, розклади, ліміти сесій, діагностика).
+> Цей репозиторій лишається для історії; нових версій не буде. (Жовтень 2026)
+>
+> *This integration is no longer maintained. For Eveus / Energy Star chargers use
+> [ABovsh/eveus](https://github.com/ABovsh/eveus) instead.*
+
 # ⚡ EVSE Energy Star
 
 Інтеграція для [Home Assistant](https://www.home-assistant.io/), яка забезпечує локальне керування зарядними станціями **Energy Star Pro** та **Eveus Pro** через їхній вбудований веб-інтерфейс (JSON API).
